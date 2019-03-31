@@ -13,37 +13,50 @@
     (if-let [tag (-> x str simple-tag?)]
       (list tag nil xs))))
 
-(list->tag&props&children '(foo bar baz))
-(list->tag&props&children '(<foo bar baz))
-(list->tag&props&children '(<foo> bar baz))
-(list->tag&props&children '(<foo :a 123 :b 456 > bar baz))
-(list->tag&props&children '(<foo :a "A" :b "B" ... x :c "C" :d "D" > bar baz))
-(list->tag&props&children '(<foo :a "A" :b "B" ... x :c "C" :d "D"))
+(into {} (map (fn [x] x) {:a "A" :b "B"}))
 
-;; TODO: The recursion is not implemented yet
+(defn nil-when-empty [x]
+  (if (empty? x)
+    nil
+    x))
+
+(defn walk-props [props]
+  (if (map? props)
+    (nil-when-empty
+     (into {}
+           (map (fn [x] (walk x))
+                props)))
+    props))
+
+(map identity [])
+
 (defn walk [form]
   (cond
     (list? form)
-    (if-let [[tag props-mergelist children] (list->tag&mergelist&children form)]
-      `(*jsx*
+    (if-let [[tag
+              props-mergelist
+              children] (list->tag&props&children form)]
+      `(~(symbol "*jsx*")
         ~(resolve-tag tag)
         ~(if (< 1 (count props-mergelist))
-           `(merge ~@props-mergelist)
-           (first props-mergelist))
-        ~@children)
-      form)
+           `(merge ~@(map walk-props props-mergelist))
+           (walk-props (first props-mergelist)))
+        ~@(map walk children))
+      (map walk form))
 
     (vector? form)
-    "vector"
+    (into [] (map walk form))
 
     (set? form)
-    "set"
+    (into #{} (map walk form))
 
     (map? form)
-    "map"
+    (into {} (map (fn [[k v]]
+                    [(walk k) (walk v)])
+                  form))
 
     :else
-    "something else"))
+    form))
 
 (walk '(foo bar))
 

@@ -49,6 +49,8 @@
       (bar baz))
  )
 
+(def walk (walk-factory "jsx"))
+
 (facts
  "Walk"
  (fact
@@ -58,32 +60,32 @@
  (fact
   "Simple JSX"
   (walk '(<foo> bar baz))
-  => '(*jsx* "foo" nil bar baz)
+  => '(jsx "foo" nil bar baz)
 
   (walk '(<foo/Bar> bar baz))
-  => '(*jsx* foo/Bar nil bar baz)
+  => '(jsx foo/Bar nil bar baz)
 
   (walk '(<foo.Bar> bar baz))
-  => '(*jsx* foo.Bar nil bar baz)
+  => '(jsx foo.Bar nil bar baz)
   )
 
  (fact
   "Props JSX"
   (walk
    '(<foo > bar baz))
-  => '(*jsx* "foo" nil bar baz)
+  => '(jsx "foo" nil bar baz)
 
   (walk
    '(<foo :a "A" :b > bar baz))
-  => '(*jsx* "foo" {:a "A" :b true} bar baz)
+  => '(jsx "foo" {:a "A" :b true} bar baz)
 
   (walk
    '(<foo/Bar :a :b :c > bar baz))
-  => '(*jsx* foo/Bar {:a true :b true :c true} bar baz)
+  => '(jsx foo/Bar {:a true :b true :c true} bar baz)
 
   (walk
    '(<foo.Bar :a "A" ... x :b "B" :a "AA" > bar baz))
-  => '(*jsx*
+  => '(jsx
        foo.Bar
        (clojure.core/merge
         {:a "A"}
@@ -98,14 +100,14 @@
     '(foo
       (<bar> baz))) =>
    '(foo
-     (*jsx* "bar" nil baz))
+     (jsx "bar" nil baz))
 
    (walk
     '(foo
       (<bar> baz)
       bing)) =>
    '(foo
-     (*jsx* "bar" nil baz)
+     (jsx "bar" nil baz)
      bing))
 
   (walk
@@ -114,7 +116,7 @@
      (<bar> baz))) =>
   '(foo
     bing
-    (*jsx* "bar" nil baz))
+    (jsx "bar" nil baz))
 
   (walk
    '(foo
@@ -122,25 +124,25 @@
      (<bar> baz))) =>
   '(foo
     bing
-    (*jsx* "bar" nil baz))
+    (jsx "bar" nil baz))
 
   (walk
    '(<foo> baz
            (<bar> bing))) =>
-  '(*jsx* "foo" nil
+  '(jsx "foo" nil
           baz
-          (*jsx* "bar" nil
+          (jsx "bar" nil
                  bing))
 
   (walk
    '(<foo> foo
            (<bar> bar
                   (<baz> baz)))) =>
-  '(*jsx* "foo" nil
+  '(jsx "foo" nil
           foo
-          (*jsx* "bar" nil
+          (jsx "bar" nil
                  bar
-                 (*jsx* "baz" nil
+                 (jsx "baz" nil
                         baz)))
 
   (walk
@@ -151,9 +153,9 @@
      555])
   =>
   '[111
-    (*jsx* "two" nil 222)
+    (jsx "two" nil 222)
     333
-    (*jsx* "four" nil 444)
+    (jsx "four" nil 444)
     555]
 
   (walk
@@ -164,9 +166,9 @@
       555})
   =>
   '#{111
-    (*jsx* "two" nil 222)
+    (jsx "two" nil 222)
     333
-    (*jsx* "four" nil 444)
+    (jsx "four" nil 444)
     555}
 
   (walk
@@ -177,9 +179,9 @@
      :e "E"})
   =>
   '{:a "A"
-    :b (*jsx* "b" nil b)
-    (*jsx* "c" nil c) "C"
-    :d (*jsx* "d" nil d)
+    :b (jsx "b" nil b)
+    (jsx "c" nil c) "C"
+    :d (jsx "d" nil d)
     :e "E"}
 
   (walk
@@ -192,12 +194,12 @@
           :b >
           foo))
   =>
-  '(*jsx* "foo"
-          {:bar (*jsx* "bar" nil bar)
+  '(jsx "foo"
+          {:bar (jsx "bar" nil bar)
            :a "A"
-           :baz (*jsx* "baz"
+           :baz (jsx "baz"
                        {:c "C"
-                        :bing (*jsx* "bing" nil bing)
+                        :bing (jsx "bing" nil bing)
                         :d "D"}
                        baz)
            :b true}
@@ -213,15 +215,115 @@
           :d >
           foo))
   =>
-  '(*jsx* "foo"
+  '(jsx "foo"
           (clojure.core/merge
            {:a "A"
-            :bar (*jsx* "bar" nil bar)
+            :bar (jsx "bar" nil bar)
             :b true}
            xxx
            {:c "C"
-            :baz (*jsx* "baz" nil baz)
+            :baz (jsx "baz" nil baz)
             :d true})
           foo)
   ))
 
+(defjsx my> my-jsx)
+
+(defn my-jsx [tag props & children]
+  {:tag tag
+   :props props
+   :children (into [] children)})
+
+(fact
+ "Custom JSX"
+ (my>
+  (+ 100 10 1))
+ =>
+ 111
+
+ (my>
+  (<foo> "child-1"
+         "child-2"))
+ =>
+ {:tag "foo"
+  :props nil
+  :children ["child-1" "child-2"]}
+
+ (my>
+  (<foo> "foo-child-1"
+         (<bar> "bar-child-1"
+                "bar-child-2")
+         "foo-child-3"))
+ =>
+ {:tag "foo"
+  :props nil
+  :children ["foo-child-1"
+             {:tag "bar"
+              :props nil
+              :children ["bar-child-1"
+                         "bar-child-2"]}
+             "foo-child-3"]}
+
+ (my>
+  (<foo :a "A" :b "B" :c "C"
+        ... {:a "AA"}
+        :c "CC" >
+        "foo-child"))
+ =>
+ {:tag "foo"
+  :props {:a "AA"
+          :b "B"
+          :c "CC"}
+  :children ["foo-child"]}
+
+ (my>
+  (let [bar (<bar>)
+        Baz "BAZ"]
+    (<foo> "foo"
+           bar
+           (<Baz> "baz")
+           "foo")))
+ =>
+ {:tag "foo",
+  :props nil,
+  :children ["foo"
+             {:tag "bar",
+              :props nil,
+              :children []}
+             {:tag "BAZ",
+              :props nil,
+              :children ["baz"]}
+             "foo"]}
+
+ (my>
+  (map (fn [x] (<foo> x))
+       ["A" "B" "C"]))
+ =>
+ '({:tag "foo", :props nil, :children ["A"]}
+   {:tag "foo", :props nil, :children ["B"]}
+   {:tag "foo", :props nil, :children ["C"]})
+
+ (my>
+  (map (fn [Tag] (<Tag> "child"))
+       ["a" "b" "c"]))
+ =>
+ '({:tag "a", :props nil, :children ["child"]}
+   {:tag "b", :props nil, :children ["child"]}
+   {:tag "c", :props nil, :children ["child"]})
+
+ (my>
+  (map #(<foo :prop % > %)
+       ["a" "b" "c"]))
+ =>
+ '({:tag "foo", :props {:prop "a"}, :children ["a"]}
+   {:tag "foo", :props {:prop "b"}, :children ["b"]}
+   {:tag "foo", :props {:prop "c"}, :children ["c"]})
+
+ (my>
+  (let [Foo "FOO"]
+    (map #(<Foo :prop % > %)
+         ["a" "b" "c"])))
+ => '({:tag "FOO", :props {:prop "a"}, :children ["a"]}
+      {:tag "FOO", :props {:prop "b"}, :children ["b"]}
+      {:tag "FOO", :props {:prop "c"}, :children ["c"]})
+ )

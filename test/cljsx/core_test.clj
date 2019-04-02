@@ -5,6 +5,10 @@
 (fact
  "list->tag&props&children"
  (list->tag&props&children
+  '(<> foo bar))
+ => '(<> nil (foo bar))
+
+ (list->tag&props&children
   '(foo bar baz))
  => nil
 
@@ -49,7 +53,7 @@
       (bar baz))
  )
 
-(def walk (walk-factory "jsx"))
+(def walk (walk-factory "jsx" "jsx-fragment"))
 
 (facts
  "Walk"
@@ -57,6 +61,12 @@
   "Leaves non-JSX expressions intact"
   (walk '(foo bar baz))
   => '(foo bar baz))
+
+ (fact
+  "JSX Fragment"
+  (walk '(<> bar baz))
+  => '(jsx jsx-fragment nil bar baz))
+
  (fact
   "Simple JSX"
   (walk '(<foo> bar baz))
@@ -227,12 +237,14 @@
           foo)
   ))
 
-(defjsx my> my-jsx)
+(defjsx my> my-jsx my-fragment)
 
 (defn my-jsx [tag props & children]
   {:tag tag
    :props props
    :children (into [] children)})
+
+(def my-fragment "MY FRAGMENT")
 
 (fact
  "Custom JSX"
@@ -246,6 +258,14 @@
          "child-2"))
  =>
  {:tag "foo"
+  :props nil
+  :children ["child-1" "child-2"]}
+
+ (my>
+  (<> "child-1"
+      "child-2"))
+ =>
+ {:tag my-fragment
   :props nil
   :children ["child-1" "child-2"]}
 
@@ -284,14 +304,33 @@
            (<Baz> "baz")
            "foo")))
  =>
- {:tag "foo",
-  :props nil,
+ {:tag "foo"
+  :props nil
   :children ["foo"
-             {:tag "bar",
-              :props nil,
+             {:tag "bar"
+              :props nil
               :children []}
-             {:tag "BAZ",
-              :props nil,
+             {:tag "BAZ"
+              :props nil
+              :children ["baz"]}
+             "foo"]}
+
+ (my>
+  (let [bar (<bar>)
+        Baz "BAZ"]
+    (<> "foo"
+           bar
+           (<Baz> "baz")
+           "foo")))
+ =>
+ {:tag my-fragment
+  :props nil
+  :children ["foo"
+             {:tag "bar"
+              :props nil
+              :children []}
+             {:tag "BAZ"
+              :props nil
               :children ["baz"]}
              "foo"]}
 
@@ -302,6 +341,14 @@
  '({:tag "foo", :props nil, :children ["A"]}
    {:tag "foo", :props nil, :children ["B"]}
    {:tag "foo", :props nil, :children ["C"]})
+
+ (my>
+  (map (fn [x] (<> x))
+       ["A" "B" "C"]))
+ =>
+ `({:tag ~my-fragment, :props nil, :children ["A"]}
+   {:tag ~my-fragment, :props nil, :children ["B"]}
+   {:tag ~my-fragment, :props nil, :children ["C"]})
 
  (my>
   (map (fn [Tag] (<Tag> "child"))
@@ -318,6 +365,14 @@
  '({:tag "foo", :props {:prop "a"}, :children ["a"]}
    {:tag "foo", :props {:prop "b"}, :children ["b"]}
    {:tag "foo", :props {:prop "c"}, :children ["c"]})
+
+ (my>
+  (map #(<> %)
+       ["a" "b" "c"]))
+ =>
+ `({:tag ~my-fragment, :props nil, :children ["a"]}
+   {:tag ~my-fragment, :props nil, :children ["b"]}
+   {:tag ~my-fragment, :props nil, :children ["c"]})
 
  (my>
   (let [Foo "FOO"]

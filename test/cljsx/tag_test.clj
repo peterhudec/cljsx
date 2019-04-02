@@ -3,33 +3,41 @@
             [clojure.test :refer :all]
             [cljsx.tag :refer :all :as tag]))
 
+(fact
+ "Fragment tag"
+ (fragment? "<>") => true
+ (fragment? "foo") => false
+ (fragment? "<foo") => false
+ (fragment? "foo>") => false
+ (fragment? "<foo>") => false)
+
 (facts
  "Simple tag"
  (fact
   "Any string wrapped in < and > is a simple tag."
-  (simple-tag? "<foo>") => "foo"
-  (simple-tag? "<foo.bar>") => "foo.bar"
-  (simple-tag? "<foo bar baz bing>") => "foo bar baz bing")
+  (simple? "<foo>") => "foo"
+  (simple? "<foo.bar>") => "foo.bar"
+  (simple? "<foo bar baz bing>") => "foo bar baz bing")
 
  (fact
   "Anything else is not a simple tag"
-  (simple-tag? "<foo") => nil
-  (simple-tag? "foo.bar>") => nil
-  (simple-tag? "foo bar baz bing") => nil))
+  (simple? "<foo") => nil
+  (simple? "foo.bar>") => nil
+  (simple? "foo bar baz bing") => nil))
 
 (facts
  "Props tag"
  (fact
   (str "Any string starting with < but not ending with >"
        "is a \"props\" tag")
-  (props-tag? "<foo") => "foo"
-  (props-tag? "<foo.bar") => "foo.bar"
-  (props-tag? "<foo bar baz/bing") => "foo bar baz/bing")
+  (props? "<foo") => "foo"
+  (props? "<foo.bar") => "foo.bar"
+  (props? "<foo bar baz/bing") => "foo bar baz/bing")
  (fact
   "Anyting else is not a props tag"
-  (props-tag? "foo") => nil
-  (props-tag? "foo>") => nil
-  (props-tag? "<foo>") => nil))
+  (props? "foo") => nil
+  (props? "foo>") => nil
+  (props? "<foo>") => nil))
 
 (fact
  "Resolve tag"

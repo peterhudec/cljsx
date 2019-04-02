@@ -1,24 +1,28 @@
 (ns cljsx.core
   (:require
-   [cljsx.tag :refer [props-tag?
-                      resolve-tag
-                      simple-tag?]]
-   [cljsx.props :refer [list->props&children
-                        props->mergelist]]))
+   [cljsx.tag :as tag]
+   [cljsx.props :as props]))
 
 (defn list->tag&props&children [[x & xs]]
-  (if-let [tag (-> x str props-tag?)]
-    (let [[props children] (list->props&children xs)]
-      (list tag (props->mergelist props) children))
-    (if-let [tag (-> x str simple-tag?)]
-      (list tag nil xs))))
+  (let [str-tag (str x)]
+    (if (tag/fragment? str-tag)
+      (list '<> nil xs)
+      (if-let [tag (tag/props? str-tag)]
+        (let [[props
+               children] (props/list->props&children xs)]
+          (list
+           tag
+           (props/props->mergelist props)
+           children))
+        (if-let [tag (tag/simple? str-tag)]
+          (list tag nil xs))))))
 
-(defn nil-when-empty [x]
+(defn- nil-when-empty [x]
   (if (empty? x)
     nil
     x))
 
-(defn walk-factory [jsx-name*]
+(defn walk-factory [jsx-name jsx-fragment]
   (letfn
       [(walk-props [props]
          (if (map? props)
@@ -31,8 +35,10 @@
                      props-mergelist
                      children] (list->tag&props&children
                                 form)]
-             `(~(symbol jsx-name*)
-               ~(resolve-tag tag)
+             `(~(symbol jsx-name)
+               ~(if (= tag '<>)
+                  (symbol jsx-fragment)
+                  (tag/resolve-tag tag))
                ~(if (< 1 (count props-mergelist))
                   `(merge ~@(map walk-props
                                  props-mergelist))
@@ -59,44 +65,10 @@
              `(do ~@results))))]
     walk-all))
 
-(defmacro defjsx [name* jsx-name]
+(defmacro defjsx [name* jsx-name jsx-fragment]
   `(defmacro ~name* [& forms#]
-     (apply (walk-factory ~(str jsx-name)) forms#)))
+     (apply
+      (walk-factory ~(str jsx-name)
+                    ~(str jsx-fragment))
+      forms#)))
 
-(defjsx jsx> *jsx*)
-(macroexpand-1 '(jsx> (a
-                       (<b> b b)
-                       c)))
-
-(macroexpand-1
- '(jsx>
-   (<a> a a)
-   (<b> b b)
-   (<c> c c)))
-
-(defjsx rsx> react/createElement)
-(macroexpand-1 '(rsx> (a
-                       (<b> b b)
-                       c)))
-
-(defn *jsx* [tag props & children]
-  {:tag tag
-   :props props
-   :children (into [] children)})
-
-(def bar "BAR")
-(def baz (jsx> (<baz> "BAZ")))
-(defn Foo [] "Foooo")
-
-(def spread-me {:spread "me"})
-
-(jsx>
- (<foo> bar
-        (<aaa :a "AAA" :aa >
-              "Ahoj")
-        baz
-        (<bbb :b (<ccc>)
-              :spread "not me"
-              ... spread-me
-              :foo (<Foo>)>
-              "BBB")));; => {:tag "foo",

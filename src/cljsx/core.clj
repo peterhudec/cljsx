@@ -22,6 +22,13 @@
     nil
     x))
 
+(defmacro js-function? [form]
+  `(= (-> ~form
+          var
+          meta
+          :ns)
+      (symbol "js")))
+
 (defn walk-factory [jsx-name jsx-fragment]
   (letfn
       [(walk-props [props]
@@ -39,10 +46,11 @@
                ~(if (= tag '<>)
                   (symbol jsx-fragment)
                   (tag/resolve-tag tag))
-               ~(if (< 1 (count props-mergelist))
-                  `(merge ~@(map walk-props
-                                 props-mergelist))
-                  (walk-props (first props-mergelist)))
+               `(~(symbol "clj->js")
+                 ~(if (< 1 (count props-mergelist))
+                    `(merge ~@(map walk-props
+                                   props-mergelist))
+                    (walk-props (first props-mergelist))))
                ~@(map walk children))
              (map walk form))
 
@@ -72,3 +80,8 @@
                     ~(str jsx-fragment))
       forms#)))
 
+(defjsx >>> jsx jsx-fragment)
+
+#_(macroexpand
+ '(>>> (<foo> "Bar")
+       (<Foo> "Bar")))

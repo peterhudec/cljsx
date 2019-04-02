@@ -13,4 +13,6 @@ pom.xml.asc
 .lein-failures
 .nrepl-port
 .cpcache/
-
+.shadow-cljs/
+node_modules/
+public/example*

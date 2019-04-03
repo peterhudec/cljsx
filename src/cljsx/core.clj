@@ -1,7 +1,8 @@
 (ns cljsx.core
   (:require
    [cljsx.tag :as tag]
-   [cljsx.props :as props]))
+   [cljsx.props :as props]
+   [cljsx.js-conversion :as js]))
 
 (defn list->tag&props&children [[x & xs]]
   (let [str-tag (str x)]
@@ -22,12 +23,6 @@
     nil
     x))
 
-(defmacro js-function? [form]
-  `(= (-> ~form
-          var
-          meta
-          :ns)
-      (symbol "js")))
 
 (defn walk-factory [jsx-name jsx-fragment]
   (letfn
@@ -42,15 +37,23 @@
                      props-mergelist
                      children] (list->tag&props&children
                                 form)]
-             `(~(symbol jsx-name)
+             `(;; JSX function
+               ~(symbol jsx-name)
+
+               ;; Tag
                ~(if (= tag '<>)
                   (symbol jsx-fragment)
                   (tag/resolve-tag tag))
-               `(~(symbol "clj->js")
-                 ~(if (< 1 (count props-mergelist))
-                    `(merge ~@(map walk-props
-                                   props-mergelist))
-                    (walk-props (first props-mergelist))))
+
+               ;; Props
+               ~(js/$clj->js-when-js
+                 (symbol jsx-name)
+                 (if (< 1 (count props-mergelist))
+                   `(merge ~@(map walk-props
+                                  props-mergelist))
+                   (walk-props (first props-mergelist))))
+
+               ;; Children
                ~@(map walk children))
              (map walk form))
 
@@ -82,6 +85,5 @@
 
 (defjsx >>> jsx jsx-fragment)
 
-#_(macroexpand
- '(>>> (<foo> "Bar")
-       (<Foo> "Bar")))
+(macroexpand
+ '(>>> (<foo>)));; => (jsx "foo" (clojure.core/-> jsx var clojure.core/meta :ns) (clj->js nil))

@@ -25,5 +25,6 @@
     intrinsic-tag
     (if-let [reference-tag (reference? s)]
       (symbol reference-tag)
-      (throw (Exception.
-              (format "Invalid tag: <%s>" s))))))
+      (throw (#?(:clj Exception.
+                 :cljs js/Error.)
+              (str "Invalid tag: <" s ">"))))))

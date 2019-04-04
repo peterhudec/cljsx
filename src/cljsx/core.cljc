@@ -43,15 +43,32 @@
                ;; Tag
                ~(if (= tag '<>)
                   (symbol jsx-fragment)
-                  (tag/resolve-tag tag))
+                  (tag/resolve-tag tag)
+                  #_(js/$props->clj-when-js
+                   (tag/resolve-tag tag))
+                  #_(let [tag' (tag/resolve-tag tag)]
+                    (js/$props->clj-when-js tag')))
 
                ;; Props
-               ~(js/$clj->js-when-js
+               #?(:clj {:clj "CLJ"}
+                  :cljs {:cljs "CLJS"})
+               #_(~'clj->js
+                {:a "aaa"
+                  :b "BBB"
+                  :js ~(js/$js? (symbol jsx-name))})
+               #_~(js/$clj->js-when-js
+                 (symbol jsx-name)
+                 {:wtfx "WTFX"})
+               #_~(js/$clj->js-when-js
                  (symbol jsx-name)
                  (if (< 1 (count props-mergelist))
                    `(merge ~@(map walk-props
                                   props-mergelist))
                    (walk-props (first props-mergelist))))
+               #_~(if (< 1 (count props-mergelist))
+                 `(merge ~@(map walk-props
+                                props-mergelist))
+                 (walk-props (first props-mergelist)))
 
                ;; Children
                ~@(map walk children))
@@ -82,8 +99,3 @@
       (walk-factory ~(str jsx-name)
                     ~(str jsx-fragment))
       forms#)))
-
-(defjsx >>> jsx jsx-fragment)
-
-(macroexpand
- '(>>> (<foo>)));; => (jsx "foo" (clojure.core/-> jsx var clojure.core/meta :ns) (clj->js nil))

@@ -11,6 +11,6 @@
           :ns)
       (symbol "js")))
 
-(core/defjsx jsx> jsx jsx-fragment)
+(core/defjsx jsx> "jsx" "jsx-fragment")
 
-(core/defjsx rsx> react/createElement react/Fragment)
+(core/defjsx rsx> "react/createElement" "jreact/Fragment")

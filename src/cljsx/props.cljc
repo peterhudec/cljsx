@@ -1,12 +1,16 @@
 (ns cljsx.props)
 
 (defn- spread-at-end-error []
-  (throw (Exception.
+  (throw (#?(:clj Exception.
+             :cljs js/Error.)
           "Invalid spread at the end of props")))
 
 (defn- spread-operand-error [operand]
-  (throw (Exception.
-          (format "Invalid spread operand `%s`"
+  (throw (#?(:clj Exception.
+             :cljs js/Error.)
+          (str "Invalid spread operand "
+               (pr-str operand))
+          #_(format "Invalid spread operand `%s`"
                   (pr-str operand)))))
 
 (defn valid-spread-operand? [x]

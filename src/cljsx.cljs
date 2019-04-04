@@ -1,3 +1,4 @@
-(ns cljsx)
+(ns cljsx
+  (:require-macros [cljsx])
+  (:require [cljsx.core]))
 
-(def foo "CLJS FOOOO")

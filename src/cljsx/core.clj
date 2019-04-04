@@ -23,6 +23,8 @@
     nil
     x))
 
+(defn convert-props* [metadata props]
+  props)
 
 (defn walk-factory [jsx-name jsx-fragment]
   (letfn
@@ -46,7 +48,16 @@
                   (tag/resolve-tag tag))
 
                ;; Props
-               ~(js/$clj->js-when-js
+               (convert-props* #_(-> ~(symbol jsx-name)
+                                   var
+                                   meta)
+                               (meta (var ~(symbol jsx-name)))
+                               ~(if (< 1 (count props-mergelist))
+                                  `(merge ~@(map walk-props
+                                                 props-mergelist))
+                                  (walk-props (first props-mergelist))))
+               #_(convert-props* {:foo "foox"})
+               #_~(js/$clj->js-when-js
                  (symbol jsx-name)
                  (if (< 1 (count props-mergelist))
                    `(merge ~@(map walk-props
@@ -83,7 +94,10 @@
                     ~(str jsx-fragment))
       forms#)))
 
-(defjsx >>> jsx jsx-fragment)
-
-(macroexpand
- '(>>> (<foo>)));; => (jsx "foo" (clojure.core/-> jsx var clojure.core/meta :ns) (clj->js nil))
+(defmacro js? [form]
+  `(let [meta# (-> ~form
+                   var
+                   meta)]
+     (or (= (:ns meta#) (symbol "js"))
+         ;; This is only for testing and convenience
+         (:js meta#))))

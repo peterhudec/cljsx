@@ -55,6 +55,7 @@
 
 (def walk (walk-factory "jsx" "jsx-fragment"))
 
+
 ;; Testing walk is not feasible now that the result
 ;; is bloated with JS conversion code.
 #_(facts

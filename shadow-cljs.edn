@@ -1,7 +1,6 @@
 ;; shadow-cljs configuration
 {:source-paths
- ["src"
-  "examples"]
+ ["src"]
 
  :dependencies
  [[binaryage/devtools "0.9.10"]
@@ -11,7 +10,7 @@
  {5555 "public"}
 
  :builds
- {:example-1 {:target :browser
-              :output-dir "public/example-1/js"
-              :asset-path "/example-1/js"
-              :modules {:main {:entries [example-1.main]}}}}}
+ {:example {:target :browser
+            :output-dir "public/example/js"
+            :asset-path "/example/js"
+            :modules {:main {:entries [example]}}}}}

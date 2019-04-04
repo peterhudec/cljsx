@@ -2,8 +2,6 @@
   (:require
    [cljsx.core :as core]))
 
-(def foo "FOOO")
-
 (defmacro js-function? [form]
   `(= (-> ~form
           var

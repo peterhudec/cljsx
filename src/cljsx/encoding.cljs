@@ -1,6 +1,6 @@
-(ns cljsx.core)
+(ns cljsx.encoding)
 
-(defn convert-props* [metadata props]
+(defn encode-props* [metadata props]
   (if (or (= (:ns metadata) 'js)
           (:js metadata))
     (clj->js props)

@@ -1,6 +1,7 @@
 (ns cljsx.core-test
   (:require [midje.sweet :refer :all]
-            [cljsx.core :refer :all]))
+            [cljsx.core :refer :all]
+            [cljsx.encoding]))
 
 (fact
  "list->tag&props&children"
@@ -56,7 +57,7 @@
 (def walk (walk-factory "jsx" "jsx-fragment"))
 
 (defn encoded [props]
-  `(cljsx.core/convert-props*
+  `(cljsx.encoding/encode-props*
     (meta (var ~'jsx))
     ~props))
 

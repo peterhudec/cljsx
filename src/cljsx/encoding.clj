@@ -1,4 +1,4 @@
 (ns cljsx.encoding)
 
-(defn encode-props* [metadata props]
+(defn encode-props* [var' props]
   props)

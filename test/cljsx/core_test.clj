@@ -58,7 +58,7 @@
 
 (defn encoded [props]
   `(cljsx.encoding/encode-props*
-    (meta (var ~'jsx))
+    (var ~'jsx)
     ~props))
 
 (facts

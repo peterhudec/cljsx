@@ -24,9 +24,6 @@
     nil
     x))
 
-(defn convert-props* [metadata props]
-  props)
-
 (defn walk-factory [jsx-name jsx-fragment]
   (letfn
       [(walk-props [props]
@@ -50,7 +47,8 @@
 
                ;; Props
                (cljsx.encoding/encode-props*
-                (meta (var ~(symbol jsx-name)))
+                (var ~(symbol jsx-name))
+                #_(meta (var ~(symbol jsx-name)))
                 ~(if (< 1 (count props-mergelist))
                    `(merge ~@(map walk-props
                                   props-mergelist))

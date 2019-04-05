@@ -2,8 +2,7 @@
   (:require
    [cljsx.tag :as tag]
    [cljsx.props :as props]
-   [cljsx.js-conversion :as js]
-   [cljsx.encoding]))
+   [cljsx.conversion]))
 
 (defn list->tag&props&children [[x & xs]]
   (let [str-tag (str x)]
@@ -38,7 +37,12 @@
                      children] (list->tag&props&children
                                 form)]
              `(;; JSX function
-               ~(symbol jsx-name)
+               (cljsx.conversion/resolve-jsx*
+                ~(symbol jsx-name)
+                (var ~(symbol jsx-name))
+                ~(let [tag' (tag/resolve-tag tag)]
+                   (when (symbol? tag')
+                     `(var ~(tag/resolve-tag tag)))))
 
                ;; Tag
                ~(if (= tag '<>)
@@ -46,7 +50,11 @@
                   (tag/resolve-tag tag))
 
                ;; Props
-               (cljsx.encoding/encode-props*
+               ~(if (< 1 (count props-mergelist))
+                  `(merge ~@(map walk-props
+                                 props-mergelist))
+                  (walk-props (first props-mergelist)))
+               #_(cljsx.encoding/encode-props*
                 (var ~(symbol jsx-name))
                 #_(meta (var ~(symbol jsx-name)))
                 ~(if (< 1 (count props-mergelist))

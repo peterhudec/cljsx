@@ -9,9 +9,16 @@
   "Clj Component")
 
 (cljsx/rsx>
+ (defn ForwardProps [props]
+   (js/console.log "wtfx" props)
+   (<pre ... props >
+         "Forward props"))
+
  (react-dom/render
-  (<div :className "foo"
-        :style {:background "yellow"}>
+  (<div>
+   (<h1> "Hello CLJSX")
+   (<ForwardProps :className "foo"
+                  :style {:background "gold"}>)
    (<js/JSComponent1 :a "A"
                      :b "B"
                      :map {:x "X" :y "Y"}>

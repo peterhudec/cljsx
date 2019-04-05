@@ -40,9 +40,13 @@
                (cljsx.conversion/resolve-jsx*
                 ~(symbol jsx-name)
                 (var ~(symbol jsx-name))
-                ~(let [tag' (tag/resolve-tag tag)]
+                ;; FIXME: (tag/resolve-tag tag) fails on fragment,
+                ;;        because in that case the tag is a symbol and
+                ;;        the function is expecting a string
+                ~(let [tag' (and (not= tag '<>)
+                                 (tag/resolve-tag tag))]
                    (when (symbol? tag')
-                     `(var ~(tag/resolve-tag tag)))))
+                     `(var ~tag'))))
 
                ;; Tag
                ~(if (= tag '<>)

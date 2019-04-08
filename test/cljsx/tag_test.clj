@@ -48,6 +48,22 @@
  (resolve-tag "foo.bar/baz.Bing") => 'foo.bar/baz.Bing
  (resolve-tag "Foo.Bar/Baz.Bing") => 'Foo.Bar/Baz.Bing
 
+ (resolve-tag "Foo*") => 'Foo*
+ (resolve-tag "Foo*bar") => 'Foo*bar
+ (resolve-tag "Foo-") => 'Foo-
+ (resolve-tag "Foo-bar") => 'Foo-bar
+ (resolve-tag "Foo'") => 'Foo'
+ (resolve-tag "Foo'bar") => 'Foo'bar
+ (resolve-tag "Foo&") => 'Foo&
+ (resolve-tag "Foo&bar") => 'Foo&bar
+ (resolve-tag "Foo+") => 'Foo+
+ (resolve-tag "Foo+bar") => 'Foo+bar
+ (resolve-tag "Foo<") => 'Foo<
+ (resolve-tag "Foo<bar") => 'Foo<bar
+ (resolve-tag "Foo>") => 'Foo>
+ (resolve-tag "Foo>bar") => 'Foo>bar
+ (resolve-tag "Foo>") => 'Foo>
+ (resolve-tag "Foo>bar") => 'Foo>bar
  (resolve-tag "foo.bar") =>
  (throws #"Invalid tag: <foo.bar>")
 
@@ -60,3 +76,60 @@
  (resolve-tag "foo.Bar/baz") =>
  (throws #"Invalid tag: <foo.Bar/baz>"))
 
+(fact
+ "Needs conversion"
+ (needs-conversion? "foo") => true
+ (needs-conversion? "Foo") => true
+ (needs-conversion? "Foo_") => true
+ (needs-conversion? "Foo_bar") => true
+ (needs-conversion? "Foo$") => true
+ (needs-conversion? "Foo$bar") => true
+
+ (needs-conversion? "Foo-") => false
+ (needs-conversion? "Foo-bar") => false
+ (needs-conversion? "Foo+") => false
+ (needs-conversion? "Foo+bar") => false
+ (needs-conversion? "Foo*") => false
+ (needs-conversion? "Foo*bar") => false
+ (needs-conversion? "Foo&") => false
+ (needs-conversion? "Foo&bar") => false
+ (needs-conversion? "Foo>") => false
+ (needs-conversion? "Foo>bar") => false
+ (needs-conversion? "Foo<") => false
+ (needs-conversion? "Foo<bar") => false
+ (needs-conversion? "Foo'") => false
+ (needs-conversion? "Foo'bar") => false
+
+ (needs-conversion? "foo/Bar") => true
+ (needs-conversion? "foo/Bar_") => true
+ (needs-conversion? "foo/Bar_baz") => true
+ (needs-conversion? "foo/Bar$") => true
+ (needs-conversion? "foo/Bar$baz") => true
+
+ (needs-conversion? "foo/Bar-") => false
+ (needs-conversion? "foo/Bar-baz") => false
+
+ (needs-conversion? "foo/bar.Baz") => true
+ (needs-conversion? "foo/bar.Baz") => true
+
+ (needs-conversion? "foo.bar/baz.bing")
+ => true
+
+ (needs-conversion? "foo.bar/baz.Bing")
+ => true
+
+ (needs-conversion? "foo.foo.foo/bar.bar.bar")
+ => true
+
+ (needs-conversion? "foo.foo.foo/bar.bar.Bar")
+ => true
+
+ (needs-conversion? "foo*")
+ => false
+
+ (needs-conversion? "foo*")
+ => false
+
+ (needs-conversion? "foo*")
+ => false
+ )

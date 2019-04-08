@@ -37,12 +37,21 @@
                      children] (list->tag&props&children
                                 form)]
              `(;; JSX function
-               (cljsx.conversion/resolve-jsx*
+               ;; Allow for implementation of props conversion
+               ;; e.g. Clojure props to JavaScript props.
+               (cljsx.conversion/intercept-jsx*
                 ~(symbol jsx-name)
-                (var ~(symbol jsx-name))
-                ~(let [tag' (tag/resolve-tag tag)]
-                   (when (symbol? tag')
-                     `(var ~(tag/resolve-tag tag)))))
+                ;; Whether `jsx` needs conversion
+                ~(-> jsx-name
+                     tag/needs-conversion?)
+                ;; Whether tag needs conversion
+                ~(if (= tag '<>)
+                   ;; Fragment tag always needs conversion
+                   true
+                   (-> tag
+                       tag/resolve-tag
+                       str
+                       tag/needs-conversion?)))
 
                ;; Tag
                ~(if (= tag '<>)
@@ -54,13 +63,6 @@
                   `(merge ~@(map walk-props
                                  props-mergelist))
                   (walk-props (first props-mergelist)))
-               #_(cljsx.encoding/encode-props*
-                (var ~(symbol jsx-name))
-                #_(meta (var ~(symbol jsx-name)))
-                ~(if (< 1 (count props-mergelist))
-                   `(merge ~@(map walk-props
-                                  props-mergelist))
-                   (walk-props (first props-mergelist))))
 
                ;; Children
                ~@(map walk children))

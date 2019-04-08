@@ -10,5 +10,5 @@
       (symbol "js")))
 
 (core/defjsx jsx> jsx jsx-fragment)
-
+(core/defjsx jsx*> jsx* jsx-fragment*)
 (core/defjsx rsx> react/createElement react/Fragment)

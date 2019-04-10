@@ -30,5 +30,6 @@
 
 (defn needs-conversion? [x]
   (->> x
-       (re-matches #"(.*[/])?[\w$.]+$")))
+       (re-matches #"(.*[/])?[\w$.]+$")
+       boolean))
 

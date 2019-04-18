@@ -2,6 +2,9 @@
   (:require
    [cljsx.core :as core]))
 
+(defmacro m []
+  (println (str "cljsx/m: " (boolean &env))))
+
 (defmacro js-function? [form]
   `(= (-> ~form
           var
@@ -12,3 +15,5 @@
 (core/defjsx jsx> jsx jsx-fragment)
 (core/defjsx jsx*> jsx* jsx-fragment*)
 (core/defjsx rsx> react/createElement react/Fragment)
+
+(core/defm bbb)

@@ -13,6 +13,7 @@
    ["react-dom" :as react-dom]))
 
 (defn CljComponent* [props]
+  (js/console.log "----------------------")
   (js/console.log "CljComponent props" props)
   "Clj Component")
 
@@ -21,56 +22,43 @@
    (<pre ... props >
     (str props))))
 
-#_(cljsx/rsx>
+#_(react-dom/render
+ (react/createElement "h1" nil
+                      "Pokus"
+                      (react/createElement CljComponent* (clj->js {:aaa "AAA"})
+                                           "CHILDREN"))
+ (js/document.querySelector "#mount"))
+
+(cljsx/rsx>
  (react-dom/render
   [
    (<h1 :className "foo"
         :key 1 >
-        "Fooo")
+        "CHILDREN")
    (<js/JSComponent1 :key 2
                      :foo "FOO"
-                     :bar "BAR" >)
+                     :bar "BAR" >
+                     "CHILDREN")
    (<CljComponent* :key 3
                    :foo "FOO"
-                   :bar "BAR" >)]
-  #_(<div>
-   (<h1 :className "foo">
-        "Hello CLJSX!")
-   #_(<ForwardProps* :className "foo"
-                   :style {:background "yellow"}
-                   :onClick #(js/console.log "clicked")>)
-   (<ul>
-    (<li> "Foo")
-    (<>
-     (<li> "Bar")
-     (<li> "Baz"))
-    (<li> "Bing"))
-   (<pre>
-    #_(if (pokus/clj? react/createElement)
-        "JO"
-        "Nein")
-    )
-   (<js/JSComponent1 :a "A"
-                     :b "B"
-                     :map {:x "X" :y "Y"}>
-                     "JS Child 1"
-                     "JS Child 2")
-   (<CljComponent* :a "A"
-                   :b "B"
-                   :map {:x "X" :y "Y"}
-                   :list '(foo bar baz)
-                   :set #{11 22 33}>
-                   "JS Child 1"
-                   "JS Child 2"))
+                   :bar "BAR" >
+                   "CHILDREN")]
   (js/document.querySelector "#mount")))
 
 (defn jsx* [tag props & children]
-  ;(js/console.log "jsx*" props)
+  (println "===================")
+  ;(println tag)
+  (js/console.log "JSX:::" props)
+  ;; (js/console.log "JSX>>>" (js->clj props))
   {:tag tag
    :props props
    :children children})
 
-(js/console.clear)
+(cljsx/jsx*>
+ (<intrinsic :iiii "iiiii" >)
+ (<CljComponent* :cccc "cccc" >)
+ (<react/Fragment :rrrr "rrrrr" >)
+ (<js/JSComponent1 :jjjj "JJJJ" >))
 
 (def ReassignedFragment react/Fragment)
 
@@ -78,8 +66,9 @@
 
 (def Identity identity)
 
-(cljsx/jsx*>
+#_(cljsx/jsx*>
  ;; (<foo :a "A" :b "B" > "Child")
+ (<intrinsic>)
  (<react/Fragment>) ;; No &env entry
  (<CljComponent*>) ;; Has &env entry, but without tag
  (<Fnc>)
@@ -111,18 +100,7 @@
    ;; Has &env, but tag is `nil` (so it thinks it's CLJ)
    (<Arg>)))
 
-(f (fn []))
-(f react/Fragment)
+;(f (fn []))
+;(f react/Fragment)
 
-(comment
-  (js/console.log "WTF???" (pokus/cljs-env?))
-  (js/console.log "======================")
-  (js/console.log "defm x" (pokus/x 12345))
-  (js/console.log "mmm" (pokus/mmm 12345))
-  (js/console.log "xxx" (pokus/xxx (+ 1000 1)))
-  (js/console.log "aaa" (cc/aaa (+ 1000 1)))
-  (js/console.log "bbb" (cljsx/bbb (+ 1000 1)))
 
-  (js/console.log "POKUS"
-                  (cc/pokus> (+ 2000 2)
-                             (str "foo" "+" "bar"))))

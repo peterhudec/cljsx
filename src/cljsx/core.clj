@@ -74,38 +74,83 @@
                      children] (list->tag&props&children
                                 form)]
              `(;; JSX
-               ~(let [is-cljs (cljs-env?* &env')]
+               ~(symbol jsx-name)
+               #_~(let [is-cljs (cljs-env?* &env')
+                      resolved-tag (tag/resolve-tag tag)
+                      jsx-symbol (symbol jsx-name)
+                      intrinsic-tag (string? resolved-tag)]
                   (if is-cljs
+                    ;; TODO: We probably don't need to use any of these
+                    ;; parameters, because we have them all already.
                     `(fn [tag# props# & children#]
-                       (do
+                       (comment
                          (js/console.log "=============")
                          (js/console.log "tag:" ~tag)
                          (js/console.log "::::")
                          (js/console.log
-                          (if (string? ~(tag/resolve-tag tag))
+                          (if (string? ~resolved-tag)
                             "INTRINSIC"
                             (cljsx.conversion/js?
-                             ~(tag/resolve-tag tag)))))
-                       (apply ~(symbol jsx-name)
+                             ~resolved-tag)))
+                         (js/console.log "needs-conversion:"
+                                         (or (string? ~resolved-tag)
+                                             (cljsx.conversion/js?
+                                              ~resolved-tag))
+                                         ;; This doesn't work
+                                         #_(cljsx.conversion/needs-conversion?
+                                            ~(tag/resolve-tag tag))))
+
+                       ;; Do this only if the JSX is a JS function
+                       (apply (if (cljsx.conversion/js? ~resolved-tag)
+                                ;; If tag is a JS function (or string)
+                                ;; just use the JSX function as is.
+                                ~jsx-symbol
+                                ;; Otherwise intercept it, so we can
+                                ;; convert back the props from JS to CLJ
+                                (fn [tag'# props'# & children'#]
+                                  (apply ~jsx-symbol
+                                         tag'#
+                                         ;; TODO: Keep just props# if React
+                                         ;; passes children to them...
+                                         #_props#
+                                         ;; ...otherwise convert them.
+                                         (cljs.core/js->clj
+                                          props'#
+                                          :keywordize-keys true)
+                                         children'#)))
                               tag#
-                              (if (cljsx.core/js? ~(symbol jsx-name))
+                              props#
+                              #_(cljs.core/clj->js props#)
+                              #_(if (cljsx.conversion/js? ~resolved-tag)
                                 (cljs.core/clj->js props#)
                                 props#)
                               children#))
-                    (symbol jsx-name)))
+                    jsx-symbol))
 
                ;; Tag
-               ~(if (= tag '<>)
+               ~(let [resolved-tag (if (= tag '<>)
+                                     (symbol jsx-fragment)
+                                     (tag/resolve-tag tag))]
+                  `(let [resolved-tag# ~resolved-tag]
+                     (if (cljsx.conversion/js? ~resolved-tag)
+                       resolved-tag#
+                       (fn [props#]
+                         ;; If we try to do (~resolved-tag ...),
+                         ;; compilation fails, but it works when it is
+                         ;; assigned in let binding.
+                         (resolved-tag# (cljs.core/js->clj
+                                   props#
+                                   :keywordize-keys true))))))
+               #_~(if (= tag '<>)
                   (symbol jsx-fragment)
                   (tag/resolve-tag tag))
 
                ;; Props
-               #_~(let [tag' (if (= tag '<>)
-                             (symbol jsx-fragment)
-                             (tag/resolve-tag tag))]
-                  `{:tag ~tag'
-                    :clj? (cljsx.core/clj? ~tag')})
-               ~(if (< 1 (count props-mergelist))
+               (cljs.core/clj->js ~(if (< 1 (count props-mergelist))
+                                    `(merge ~@(map walk-props
+                                                   props-mergelist))
+                                    (walk-props (first props-mergelist))))
+               #_~(if (< 1 (count props-mergelist))
                   `(merge ~@(map walk-props
                                  props-mergelist))
                   (walk-props (first props-mergelist)))

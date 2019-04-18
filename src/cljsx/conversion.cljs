@@ -1,6 +1,6 @@
 (ns cljsx.conversion
   (:require-macros [cljsx.core :as core]
-                   [cljsx.conversion :as c]))
+                   [cljsx.conversion :refer [js?]]))
 
 (defn intercept-jsx* [jsx jsx-needs-conversion? tag-needs-conversion?]
   (if jsx-needs-conversion?
@@ -24,7 +24,7 @@
     ;; If `jsx` is a Clojure function, we leave it unchanged.
     jsx))
 
-(defn intercept-jsx-2* [jsx]
+#_(defn intercept-jsx-2* [jsx]
   (fn [tag props & children]
     (js/console.log "==============")
     (js/console.log "INTERCEPTED")
@@ -33,3 +33,7 @@
     (js/console.log "wtf" (c/js? tag))
     (js/console.log "--------------")
     (apply jsx tag props children)))
+
+(defn needs-conversion? [tag]
+  (or #_(string? tag)
+      (js? tag)))

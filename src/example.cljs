@@ -72,10 +72,21 @@
 
 (js/console.clear)
 
+(def ReassignedFragment react/Fragment)
+
+(def Fnc (fn [props] 123))
+
+(def Identity identity)
+
 (cljsx/jsx*>
- #_(<foo :a "A" :b "B" > "Child")
- #_(<react/Fragment>) ;; No &env entry
- #_(<CljComponent*>) ;; Has &env entry, but without tag
+ ;; (<foo :a "A" :b "B" > "Child")
+ (<react/Fragment>) ;; No &env entry
+ (<CljComponent*>) ;; Has &env entry, but without tag
+ (<Fnc>)
+ (<Identity>)
+ (<ReassignedFragment>)
+ (<js/JSComponent1>)
+
  (let [LetReactFragment react/Fragment
        LetClj CljComponent*
        LetFn (fn [props] "heh")
@@ -101,6 +112,7 @@
    (<Arg>)))
 
 (f (fn []))
+(f react/Fragment)
 
 (comment
   (js/console.log "WTF???" (pokus/cljs-env?))

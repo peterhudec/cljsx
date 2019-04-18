@@ -73,71 +73,19 @@
                      props-mergelist
                      children] (list->tag&props&children
                                 form)]
-             `(;; JSX function
-               ;; Allow for implementation of props conversion
-               ;; e.g. Clojure props to JavaScript props.
-               #_(cljsx.conversion/intercept-jsx*
-                ~(symbol jsx-name)
-                ;; Whether `jsx` needs conversion
-                ~(-> jsx-name
-                     tag/needs-conversion?)
-                ;; Whether tag needs conversion
-                ~(if (= tag '<>)
-                   ;; Fragment tag always needs conversion
-                   true
-                   (-> tag
-                       tag/resolve-tag
-                       str
-                       tag/needs-conversion?)))
-               ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-               #_(fn [tag# props# & children#]
-                 (do
-                   (js/console.log "----------")
-                   (js/console.log "CLJS?:" ~is-cljs)
-                   (js/console.log "tag:" tag#)
-                   (js/console.log "props:" props#)
-                   (js/console.log "children:" children#)
-                   (js/console.log "jsx: " ~(symbol jsx-name))
-                   (js/console.log "cljs.core/clj->js: "
-                                   cljs.core/clj->js)
-                   (js/console.log "js props: "
-                                   (cljs.core/clj->js props#)))
-                 (apply ~(symbol jsx-name)
-                        tag#
-                        (cljs.core/clj->js props#)
-                        children#))
+             `(;; JSX
                ~(let [is-cljs (cljs-env?* &env')]
                   (if is-cljs
                     `(fn [tag# props# & children#]
                        (do
                          (js/console.log "=============")
-                                        ;(js/console.log "tag#:" tag#)
                          (js/console.log "tag:" ~tag)
-                         #_(js/console.log "resolved-tag:"
-                                           ~(tag/resolve-tag tag))
                          (js/console.log "::::")
-                         (js/console.log 
+                         (js/console.log
                           (if (string? ~(tag/resolve-tag tag))
                             "INTRINSIC"
                             (cljsx.conversion/js?
-                             ~(tag/resolve-tag tag))))
-                         ;; There are no locals if we do the check on the env here
-                         #_(js/console.log ">>>>"
-                                         (if (string? ~(tag/resolve-tag tag))
-                                           "INTRINSIC"
-                                           ~(js?* (tag/resolve-tag tag)
-                                                  &env')))
-                         #_(js/console.log "::::"
-                                           (if ~(symbol tag)
-                                        ;(cljsx.conversion/js? ~(symbol tag))
-                                             "FUNCTION"
-                                             "INTRINSIC"))
-                         #_(js/console.log "props:" props#)
-                         #_(js/console.log "children:" children#)
-                         #_(js/console.log "(js? jsx):" (cljsx.core/js? ~(symbol jsx-name)))
-                         #_(js/console.log "jsx: " ~(symbol jsx-name))
-                         #_(js/console.log "js props: "
-                                           (cljs.core/clj->js props#)))
+                             ~(tag/resolve-tag tag)))))
                        (apply ~(symbol jsx-name)
                               tag#
                               (if (cljsx.core/js? ~(symbol jsx-name))
@@ -145,16 +93,6 @@
                                 props#)
                               children#))
                     (symbol jsx-name)))
-               #_~(if (cljs-env?* &env)
-                  `(fn [tag# props# & children#]
-                     (js/console.log "Intercepting"
-                                     ~jsx-name
-                                     props#)
-                     (apply ~(symbol jsx-name)
-                            tag#
-                            (clj->js props#)
-                            children#))
-                  (symbol jsx-name))
 
                ;; Tag
                ~(if (= tag '<>)
@@ -250,4 +188,3 @@
      (var ~macro-name)))
 
 (defjsx pokus> pokus-jsx pokus-fragment)
-

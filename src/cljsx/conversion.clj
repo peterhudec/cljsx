@@ -2,41 +2,33 @@
 
 (defn intercept-jsx* [jsx & _] jsx)
 
-(defn- js?* [x &env]
-  (let [locals (:locals &env)
-        defs (get-in &env [:ns :defs])
-        all (merge locals defs)
-        tag (get-in all [x :tag])]
-    (boolean (or (= tag 'js)
-                 (nil? tag)))))
-
 (defmacro js?
-  "
-  If `(get all x)` is nil, this is a JS function,
-  else if `tag` (:tag (get all x)) is `js`, this is a JS function,
-  else if `tag` is `any`, this CAN BE a JS function.
-  "
+  "Checks whether `x` is a JavaScript value.
+  Returns `nil` if it can't be determined if it's
+  a JavaScript or Clojure value."
   [x]
-  #_(js?* x &env)
   (let [locals (:locals &env)
         defs (get-in &env [:ns :defs])
         all (merge locals defs)
-        entry (get all x)
-        tag (:tag entry)]
-    (if entry
-      (if (contains? entry :tag)
-        (cond
-          (= tag 'js) "SURELY JS (tag is 'js)"
-          (= tag 'any) "NOT SURE (tag is 'any)"
-          (= tag nil) (str "NOT SURE (tag is " (pr-str tag) ")")
-          :else (str "SURELY CLJ (tag is " (pr-str tag) ")"))
-        "SURELY CLJ (no tag)")
-      "SURELY JS (no entry)")
-    #_(with-out-str (clojure.pprint/pprint (get all x)))))
+        entry (all x)]
+    (if-not entry
+      ;; If there's no entry, it's a JS object
+      true
+      ;; Otherwise...
+      (case (:tag entry)
+        ;; If tag is 'js we can be sure it's a JS value.
+        js true
+        ;; If tag is 'any, we can't tell,
+        ;; This is probably a value returned from a function.
+        any nil
+        ;; If tag is nil, CLJ values have some additional keys.
+        ;; We can for example check on the presence of :meta
+        nil (if (:meta entry)
+              ;; If there is the :meta key, it is a CLJ value
+              false
+              ;; Otherwise we can't tell
+              nil)
+        ;; If tag is anything except for the above,
+        ;; it's a CLJ value.
+        false))))
 
-(defmacro clj? [x]
-  (not (js?* x &env)))
-
-(contains? {:a nil} :b)
-
-(pr-str 'foo)

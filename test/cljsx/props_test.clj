@@ -47,10 +47,10 @@
  => '((a b) (... xxx) (c d) (... yyy) (e f))
 
  (split-spread '(a b ...))
- => (throws spread-at-end-error)
+ => (throws #"Extraneous symbol in props")
 
  (split-spread '(...))
- => (throws spread-at-end-error)
+ => (throws #"Extraneous symbol in props")
 
  (split-spread '(a b ... ... c d))
  => (throws #"Invalid spread operand `...`")
@@ -102,7 +102,8 @@
 (fact
  (str "props->mergelist takes a list of props and "
       "returns a list of expressions to be merged")
- (props->mergelist ()) => nil
+ (props->mergelist ())
+ => (throws #"The first item must be a keyword or a spread!")
 
  (props->mergelist '(:a "A" :b "B"))
  => '({:a "A" :b "B"})

@@ -13,7 +13,8 @@
         entry (all x)]
     (if-not entry
       ;; If there's no entry, it's a JS object
-      true
+      #_true
+      "NO ENTRY"
       ;; Otherwise...
       (case (:tag entry)
         ;; If tag is 'js we can be sure it's a JS value.

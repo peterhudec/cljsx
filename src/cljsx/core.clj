@@ -1,5 +1,6 @@
 (ns cljsx.core
   (:require
+   [clojure.walk :as w]
    [cljsx.tag :as tag]
    [cljsx.props :as props]
    [cljsx.conversion]))
@@ -18,75 +19,11 @@
         (if-let [tag (tag/simple? str-tag)]
           (list tag nil xs))))))
 
+;; TODO: Shouldn't this should be used somewhere?
 (defn- nil-when-empty [x]
   (if (empty? x)
     nil
     x))
-
-(defn walk-factory [cljs-env jsx-name jsx-fragment]
-  (letfn
-   [(walk-props [props]
-      (if (map? props)
-        (nil-when-empty (into {} (map walk props)))
-        props))
-    (walk [form]
-      (cond
-        (seq? form)
-        (if-let [[tag
-                  props-mergelist
-                  children] (list->tag&props&children
-                             form)]
-          (let [jsx-symbol (symbol jsx-name)
-                resolved-tag (if (= tag '<>)
-                               (symbol jsx-fragment)
-                               (tag/resolve-tag tag))
-                props-mergelist (if (< 1 (count props-mergelist))
-                                  `(merge ~@(map walk-props
-                                                 props-mergelist))
-                                  (walk-props (first props-mergelist)))]
-            `(;; JSX
-              ~jsx-symbol
-
-              ;; Tag
-              ~(if cljs-env
-                 `(let [resolved-tag# ~resolved-tag]
-                   (if (cljsx.conversion/js? ~resolved-tag)
-                     resolved-tag#
-                     (fn [props#]
-                       ;; If we try to do (~resolved-tag ...),
-                       ;; compilation fails, but it works with let binding.
-                       (resolved-tag# (cljs.core/js->clj
-                                       props#
-                                       :keywordize-keys true)))))
-                 resolved-tag)
-
-              ;; Props
-              ~(if cljs-env
-                 `(cljs.core/clj->js ~props-mergelist)
-                 props-mergelist)
-
-              ;; Children
-              ~@(map walk children)))
-          (map walk form))
-
-        (vector? form)
-        (into [] (map walk form))
-
-        (set? form)
-        (into #{} (map walk form))
-
-        (map? form)
-        (into {} (map (fn [[k v]]
-                        [(walk k) (walk v)])
-                      form))
-
-        :else form))
-    (walk-all [& forms]
-      (let [results (map walk forms)]
-        (if (= (count results) 1)
-          (first results)
-          `(do ~@results))))]
-    walk-all))
 
 (defn cljs-env? [&env]
   (let [ns (:ns &env)
@@ -95,14 +32,65 @@
         c (:cljs.analyzer/constants ns)]
     (boolean (or a b c))))
 
-(defmacro defjsx [macro-name jsx-name jsx-fragment-name]
+(defn function-call? [l]
+  (and (seq? l)
+       (symbol? (first l))))
+
+(defn visit-function-call [cljs-env jsx-name fragment-name l]
+  (if-let [[tag proplist children] (list->tag&props&children l)]
+    (let [jsx-symbol (symbol jsx-name)
+          resolved-tag (if (= tag '<>)
+                         (symbol fragment-name)
+                         (tag/resolve-tag tag))
+          proplist (if (< 1 (count proplist))
+                            `(merge ~@proplist)
+                            (first proplist))]
+      ;; This is the (jsx tag props children) call:
+      `(~jsx-symbol
+
+        ;; Tag
+        ~(if cljs-env
+           `(let [resolved-tag# ~resolved-tag]
+              (if (cljsx.conversion/js? ~resolved-tag)
+                resolved-tag#
+                (fn [props#]
+                  ;; If we try to do (~resolved-tag ...),
+                  ;; compilation fails, but it works with let binding.
+                  (resolved-tag# (cljs.core/js->clj
+                                  props#
+                                  :keywordize-keys true)))))
+           resolved-tag)
+
+        ;; Props
+        ~(if cljs-env
+           `(cljs.core/clj->js ~proplist)
+           proplist)
+
+        ;; Children
+        ~@children))
+    l))
+
+(defn visit-node [cljs-env jsx-name fragment-name node]
+  (if (function-call? node)
+    (visit-function-call cljs-env
+                         jsx-name
+                         fragment-name
+                         node)
+    node))
+
+(defn wrap-in-do [[x & more :as l]]
+  (if (empty? more)
+    x
+    `(do ~@l)))
+
+(defmacro defjsx [macro-name jsx-name fragment-name]
   `(do
      (defn ~macro-name [&form# &env# & forms#]
-       (apply
-        (walk-factory (cljs-env? &env#)
-                      ~(str jsx-name)
-                      ~(str jsx-fragment-name))
-        forms#))
+       (->> forms#
+            (w/postwalk #(visit-node (cljs-env? &env#)
+                                     ~(str jsx-name)
+                                     ~(str fragment-name)
+                                     %))
+            wrap-in-do))
      (. (var ~macro-name) (setMacro))
      (var ~macro-name)))
-

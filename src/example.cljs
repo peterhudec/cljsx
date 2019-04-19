@@ -30,11 +30,39 @@
  (js/document.querySelector "#mount"))
 
 (cljsx/rsx>
+ (defn YetAnotherComponent [props]
+   (js/console.log "YetAnotherComponent props" props)
+   "Yet another component")
+
+ (defn MyOtherComponent [props]
+   (js/console.log "MyOtherComponent props" props)
+   "My other component"
+   ;; If a component is used inside the same JSX macro
+   ;; as it is declared, it will have no record in the &env
+   ;; and will be detected as JS function
+   (<YetAnotherComponent :foo "Bar" >)))
+
+(cljsx/rsx>
+ ;; This is detected as a JS function,
+ ;; because it's not in the &env
+ (defn MyComponent [props]
+   ;; Here props are a JS object
+   (js/console.log "MyComponent props" props)
+   (<div :style {:border "4px dashed green"} >
+         "My component"))
+
  (react-dom/render
   [
    (<h1 :className "foo"
         :key 1 >
-        "CHILDREN")
+        "CHILDREN"
+        "Child 2")
+   (<MyComponent :foo "bar"
+                 >)
+   (<MyOtherComponent :foo "bar"
+                      >)
+   (<YetAnotherComponent :foo "bar"
+                         >)
    (<js/JSComponent1 :key 2
                      :foo "FOO"
                      :bar "BAR" >

@@ -94,3 +94,18 @@
             wrap-in-do))
      (. (var ~macro-name) (setMacro))
      (var ~macro-name)))
+
+(defn fnjs* [fn-args]
+  `(fn [& more#]
+     (apply (fn ~@fn-args)
+            (map #(cljs.core/js->clj % :keywordize-keys true)
+                 more#))))
+
+(defmacro fnjs [& fn-args]
+  (fnjs* fn-args))
+
+(defmacro defnjs [name' & defn-args]
+  `(def ~name' ~(fnjs* defn-args)))
+
+
+

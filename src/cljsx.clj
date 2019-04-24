@@ -2,7 +2,7 @@
   (:require
    [cljsx.core :as core]))
 
-(defmacro fnjs
+(defmacro fn'
   "Same as `fn` but arguments will be passed converted by `js->clj`
   with `:keywordize-keys true`."
   [& fn-args]
@@ -11,7 +11,7 @@
            (map #(cljs.core/js->clj % :keywordize-keys true)
                 args#))))
 
-(defmacro defnjs
+(defmacro defn'
   "Same as `defn` but arguments will be passed converted by `js->clj`
   with `:keywordize-keys true`."
   [name & [frst & more :as decls]]

@@ -106,6 +106,3 @@
 
 (defmacro defnjs [name' & defn-args]
   `(def ~name' ~(fnjs* defn-args)))
-
-
-

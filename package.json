@@ -14,7 +14,8 @@
     "shadow-cljs": "^2.8.25"
   },
   "scripts": {
-    "test": "echo 'wtf'"
+    "test": "lein midje && shadow-cljs compile node-test && node public/node-test.js",
+    "watch-test": "shadow-cljs watch node-test-dev"
   },
   "repository": {
     "type": "git",

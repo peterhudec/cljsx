@@ -1,2 +1,3 @@
-(ns cljsx.core)
+(ns cljsx.core
+  (:require-macros [cljsx.core]))
 

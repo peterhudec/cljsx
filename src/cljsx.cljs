@@ -1,6 +1,5 @@
 (ns cljsx
-  (:require-macros [cljsx])
-  (:require [cljsx.conversion]))
+  (:require-macros [cljsx]))
 
 (defn with-js-args [f]
   #(apply f (map clj->js %&)))

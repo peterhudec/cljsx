@@ -1,6 +1,4 @@
-(ns cljsx.props
-  (:require
-   [cljsx.conversion]))
+(ns cljsx.props)
 
 (defn- spread-at-end-error []
   (throw (Exception.

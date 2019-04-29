@@ -87,13 +87,3 @@
 (core/defjsx >>> jsx jsx-fragment)
 (core/defjsx react>>> react/createElement react/Fragment)
 
-(comment
-  (>>>
-   (<div>
-    (<h1> "Hello World!")
-    (<p> "Lorem ipsum dolor sit amet.")))
-  (react>>>
-   (<div>
-    (<h1> "Hello World!")
-    (<p> "Lorem ipsum dolor sit amet."))))
-

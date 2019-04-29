@@ -18,7 +18,7 @@
   "Clj Component")
 
 (defn ForwardProps* [props]
-  (cljsx/rsx>
+  (cljsx/react>>>
    (<pre ... props >
     (str props))))
 
@@ -40,7 +40,7 @@
                                            "CHILDREN"))
  (js/document.querySelector "#mount"))
 
-(cljsx/rsx>
+(cljsx/react>>>
  (defn YetAnotherComponent [{:keys [foo] :as props}]
    (js/console.log "===================")
    (let [props (js->clj props :keywordize-keys true)]
@@ -56,7 +56,7 @@
    ;; and will be detected as JS function
    (<YetAnotherComponent :foo "Bar" >)))
 
-(cljsx/rsx>
+(cljsx/react>>>
  ;; This is detected as a JS function,
  ;; because it's not in the &env
  (defn MyComponent [props]
@@ -116,12 +116,12 @@
   (println "===================")
   ;(println tag)
   (js/console.log "JSX:::" props)
-  ;; (js/console.log "JSX>>>" (js->clj props))
+  ;; (js/console.log ">>>>>" (js->clj props))
   {:tag tag
    :props props
    :children children})
 
-(cljsx/jsx>
+(cljsx/>>>
  (<intrinsic :iiii "iiiii" >)
  (<CljComponent* :cccc "cccc" >)
  (<react/Fragment :rrrr "rrrrr" >)
@@ -133,7 +133,7 @@
 
 (def Identity identity)
 
-#_(cljsx/jsx>
+#_(cljsx/>>>
  ;; (<foo :a "A" :b "B" > "Child")
  (<intrinsic>)
  (<react/Fragment>) ;; No &env entry
@@ -163,7 +163,7 @@
    ))
 
 (defn f [Arg]
-  (cljsx/jsx>
+  (cljsx/>>>
    ;; Has &env, but tag is `nil` (so it thinks it's CLJ)
    (<Arg>)))
 
@@ -196,7 +196,7 @@
 (js/console.log "###################")
 (defn pokus [jsx]
   (js/console.log "jsx is:" jsx)
-  (cljsx/jsx>
+  (cljsx/>>>
    (<div> "child")))
 
 (js/console.log "jsx" (pokus jsx))

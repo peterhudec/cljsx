@@ -84,6 +84,16 @@
         (cljsx/cljify-props props#)
         (cljsx/jsify-props props#)))))
 
-(core/defjsx jsx> jsx jsx-fragment)
-(core/defjsx rsx> react/createElement react/Fragment)
+(core/defjsx >>> jsx jsx-fragment)
+(core/defjsx react>>> react/createElement react/Fragment)
+
+(comment
+  (>>>
+   (<div>
+    (<h1> "Hello World!")
+    (<p> "Lorem ipsum dolor sit amet.")))
+  (react>>>
+   (<div>
+    (<h1> "Hello World!")
+    (<p> "Lorem ipsum dolor sit amet."))))
 

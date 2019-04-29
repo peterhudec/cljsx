@@ -27,19 +27,19 @@
   (js-or-clj props))
 
 (fact "No props"
-      (js->clj (cljsx/rsx> (<div>)))
+      (js->clj (cljsx/react>>> (<div>)))
       => (js->clj (e "div" nil))
 
-      (js->clj (cljsx/rsx> (<h1> "child")))
+      (js->clj (cljsx/react>>> (<h1> "child")))
       => (js->clj (e "h1" nil "child"))
 
-      (js->clj (cljsx/rsx> (<h1> "child1"
+      (js->clj (cljsx/react>>> (<h1> "child1"
                                  "child2")))
       => (js->clj (e "h1" nil "child1" "child2")))
 
 (fact "Props"
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<h1 :className "foo" >
              "child1"
              "child2")))
@@ -50,7 +50,7 @@
               "child2"))
 
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<h1 :className "foo"
              :style {:color "red"} >
              "child1"
@@ -63,7 +63,7 @@
               "child2"))
 
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<h1 :className "foo"
              :style {:color "red"} >)))
       => (js->clj
@@ -77,7 +77,7 @@
 
 (fact "Spread"
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<h1 :className "foo"
              ... {:className "bar"} >)))
       => (js->clj
@@ -85,7 +85,7 @@
               (clj->js {:className "bar"})))
 
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<h1 :className "foo"
              ... {:className "bar"}
              :className "baz" >)))
@@ -94,7 +94,7 @@
               (clj->js {:className "baz"})))
 
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<h1 :className "foo"
              ... {:className "bar"}
              :className "baz"
@@ -104,7 +104,7 @@
               (clj->js {:className "bing"})))
 
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<h1 :className "foo"
              ... {:className "bar"}
              :className "baz"
@@ -116,7 +116,7 @@
                         spread-props-2)))))
 (fact "Nesting"
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<div>
          (<h1> "Title")
          (<h2> "Subtitle")
@@ -130,7 +130,7 @@
               "Text"))
 
       (js->clj
-       (cljsx/rsx>
+       (cljsx/react>>>
         (<div> "Parent"
                (<div> "Child"
                       (<div> "Grand child")))))
@@ -141,100 +141,100 @@
 
 (facts "JS Detection"
        (r
-        (cljsx/rsx>
+        (cljsx/react>>>
          (<JSComponent>)))
        => "js"
 
        (r
-        (cljsx/rsx>
+        (cljsx/react>>>
          (<DefnComponent>)))
        => "clj"
 
        (r
-        (cljsx/rsx>
+        (cljsx/react>>>
          (<DefnComponentJS>)))
        => "js"
 
        (r
-        (cljsx/rsx>
+        (cljsx/react>>>
          (<DefnjsComponent>)))
        => "clj"
 
        (r
-        (cljsx/rsx>
+        (cljsx/react>>>
          (<DefnjsComponentJS>)))
        => "clj"
 
        (let [Component (fn [p] (js-or-clj p))]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "clj"
 
        (let [Component js-or-clj]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "clj"
 
        (let [Component #(js-or-clj %)]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "clj"
 
        (let [^js Component js-or-clj]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "js"
 
        (let [Component JSComponent]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "js"
 
        ;; Functions lose their tag meta when they are passed as arguments.
        (let [Component (identity JSComponent)]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "clj"
 
        (let [^js Component (identity JSComponent)]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "js"
 
        (let [Component ((fn [c] c) JSComponent)]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "clj"
 
        (let [^js Component ((fn [c] c) JSComponent)]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "js"
 
        (let [Component ((fn [] JSComponent))]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "js"
 
        (let [Component (identity DefnComponent)]
          (r
-          (cljsx/rsx>
+          (cljsx/react>>>
            (<Component>))))
        => "clj"
 
        (let [f (fn [Component]
                  (r
-                  (cljsx/rsx>
+                  (cljsx/react>>>
                    (<Component>))))]
          (f DefnComponent)
          => "clj"
@@ -248,41 +248,41 @@
          => "js"
 
          ;; Metadata is lost on functions defined in the same JSX block where it is used.
-         (cljsx/rsx>
+         (cljsx/react>>>
           (defn DefnInsideJSX [props]
             (js-or-clj props))
           (r (<DefnInsideJSX>)))
          => "js"
 
          ;; Tagging has no effect here
-         (cljsx/rsx>
+         (cljsx/react>>>
           (defn ^function DefnInsideJSX2 [props]
             (js-or-clj props))
           (r (<DefnInsideJSX2>)))
          => "js"
 
          ;; For this we have defn'
-         (cljsx/rsx>
+         (cljsx/react>>>
           (cljsx/defn' DefnInsideJSX3 [props]
             (js-or-clj props))
           (r (<DefnInsideJSX3>)))
          => "clj"
 
-         (cljsx/rsx>
+         (cljsx/react>>>
           (let [Component (fn [props]
                             (js-or-clj props))]
             (r (<Component>))))
          => "clj"
 
          ;; Metadata is lost if def is inside JSX
-         (cljsx/rsx>
+         (cljsx/react>>>
           (def DefInsideJSX (fn [props]
                               (js-or-clj props)))
           (r (<DefInsideJSX>)))
          => "js"
 
          ;; For this we have fn'
-         (cljsx/rsx>
+         (cljsx/react>>>
           (def DefInsideJSX2 (cljsx/fn' [props]
                                         (js-or-clj props)))
           (r (<DefInsideJSX2>)))
@@ -291,7 +291,7 @@
 (facts "Other forms"
        (fact "Shorthand function"
              (r
-              (cljsx/rsx>
+              (cljsx/react>>>
                (<ul>
                 (map #(<li :key % > %)
                      ["a" "b" "c"]))))
@@ -306,14 +306,14 @@
                                  "a comes before b"
                                  "b comes before a"))]
                (r
-                (cljsx/rsx>
+                (cljsx/react>>>
                  (<Component :a 5
                              :b 3
                              :comparator < >)))
                => "b comes before a"
 
                (r
-                (cljsx/rsx>
+                (cljsx/react>>>
                  (<Component :a 5
                              :b 3
                              :comparator @#'> >)))
@@ -418,7 +418,7 @@
                                    "AAA")
                             :b (e "span" nil
                                    "BBB")})))
-      => (cljsx/rsx>
+      => (cljsx/react>>>
           (let [Component (cljsx/component-js
                            {:keys [a b]}
                            (<ul>

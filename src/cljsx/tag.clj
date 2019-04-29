@@ -28,8 +28,3 @@
       (throw (Exception.
               (format "Invalid tag: <%s>" s))))))
 
-(defn needs-conversion? [x]
-  (->> x
-       (re-matches #"(.*[/])?[\w$.]+$")
-       boolean))
-

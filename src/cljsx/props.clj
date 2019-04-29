@@ -2,10 +2,6 @@
 
 (defn- spread-at-end-error []
   (throw (Exception.
-          "Invalid spread at the end of props")))
-
-(defn- spread-at-end-error []
-  (throw (Exception.
           "Extraneous symbol in props")))
 
 (defn- spread-operand-error [operand]
@@ -34,6 +30,8 @@
        (let [[spread the-rest] (split-at 2 right)
              [_ operand] spread]
          (case (count spread)
+           ;; TODO: Throwing this error is probably not necessary
+           ;; as the FSM validation happens first.
            1 (spread-at-end-error)
            2 (when-not (valid-spread-operand? operand)
                (spread-operand-error operand)))
@@ -59,7 +57,7 @@
   (and (symbol? x)
        (not= x '...)))
 
-(def validator-fsm-x
+(def validator-fsm
   {:first
    {:next [:keyword :spread]
     :error "The first item must be a keyword or a spread!"}
@@ -86,8 +84,8 @@
     :error "Spread value can only be followed by a keyword or spread!"}})
 
 (defn validate-item [state x]
-  (let [{:keys [error next]} (validator-fsm-x state)]
-    (or (some #(and ((get-in validator-fsm-x [% :validator]) x)
+  (let [{:keys [error next]} (validator-fsm state)]
+    (or (some #(and ((get-in validator-fsm [% :validator]) x)
                     %)
               next)
         error)))

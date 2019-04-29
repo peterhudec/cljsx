@@ -20,12 +20,6 @@
 (defn ^js DefnComponentJS [props]
   (js-or-clj props))
 
-(cljsx/defn' DefnjsComponent [props]
-  (js-or-clj props))
-
-(cljsx/defn' ^js DefnjsComponentJS [props]
-  (js-or-clj props))
-
 (fact "No props"
       (js->clj (cljsx/react>>> (<div>)))
       => (js->clj (e "div" nil))
@@ -155,16 +149,6 @@
          (<DefnComponentJS>)))
        => "js"
 
-       (r
-        (cljsx/react>>>
-         (<DefnjsComponent>)))
-       => "clj"
-
-       (r
-        (cljsx/react>>>
-         (<DefnjsComponentJS>)))
-       => "clj"
-
        (let [Component (fn [p] (js-or-clj p))]
          (r
           (cljsx/react>>>
@@ -261,13 +245,6 @@
           (r (<DefnInsideJSX2>)))
          => "js"
 
-         ;; For this we have defn'
-         (cljsx/react>>>
-          (cljsx/defn' DefnInsideJSX3 [props]
-            (js-or-clj props))
-          (r (<DefnInsideJSX3>)))
-         => "clj"
-
          (cljsx/react>>>
           (let [Component (fn [props]
                             (js-or-clj props))]
@@ -279,14 +256,7 @@
           (def DefInsideJSX (fn [props]
                               (js-or-clj props)))
           (r (<DefInsideJSX>)))
-         => "js"
-
-         ;; For this we have fn'
-         (cljsx/react>>>
-          (def DefInsideJSX2 (cljsx/fn' [props]
-                                        (js-or-clj props)))
-          (r (<DefInsideJSX2>)))
-         => "clj"))
+         => "js"))
 
 (facts "Other forms"
        (fact "Shorthand function"

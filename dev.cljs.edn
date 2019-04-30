@@ -1,2 +1,4 @@
 ^{:open-url "http://localhost:[[server-port]]/example-figwheel.html"}
-{:main examples.figwheel}
+{:main examples.figwheel
+ :output-dir "target/public/figwheel-out/dev"
+ :output-to "target/public/figwheel-out/main.js"}

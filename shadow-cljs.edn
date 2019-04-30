@@ -7,19 +7,18 @@
  [[binaryage/devtools "0.9.10"]
   [cider/cider-nrepl "0.21.0"]
   [refactor-nrepl "2.4.0"]
-  [midje "1.7.0"]
   [smidjen "0.2.3"]]
 
  :dev-http
- {5555 "public"}
+ {5555 ["resources/public" "target/public"]}
 
  :builds
  {:example {:target :browser
-            :output-dir "public/example/js"
-            :asset-path "/example/js"
-            :modules {:main {:entries [example]}}}
+            :output-dir "target/public/shadow-cljs-out"
+            :asset-path "/shadow-cljs-out"
+            :modules {:main {:entries [examples.shadow-cljs]}}}
   :node-test {:target :node-test
-              :output-to "public/node-test.js"}
+              :output-to "target/public/node-test.js"}
   :node-test-dev {:target :node-test
-                  :output-to "public/node-test.js"
+                  :output-to "target/public/node-test.js"
                   :autorun true}}}

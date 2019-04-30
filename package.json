@@ -11,6 +11,7 @@
     "react-dom": "^16.8.6"
   },
   "devDependencies": {
+    "@cljs-oss/module-deps": "^1.1.1",
     "shadow-cljs": "^2.8.25"
   },
   "scripts": {

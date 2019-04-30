@@ -17,3 +17,4 @@ pom.xml.asc
 node_modules/
 public/example*
 .\#*
+.rebel_readline_history

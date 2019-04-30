@@ -1,0 +1,2 @@
+^{:open-url "http://localhost:[[server-port]]/example-figwheel.html"}
+{:main examples.figwheel}

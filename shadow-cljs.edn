@@ -1,7 +1,6 @@
 ;; shadow-cljs configuration
 {:source-paths
- ["src"
-  "test"]
+ ["src" "test" "examples"]
 
  :dependencies
  [[binaryage/devtools "0.9.10"]
@@ -15,8 +14,10 @@
  :builds
  {:example {:target :browser
             :output-dir "target/public/shadow-cljs-out"
+            ;; The asset-path stopped working when the example was moved
+            ;; to ./examples.
             :asset-path "/shadow-cljs-out"
-            :modules {:main {:entries [examples.shadow-cljs]}}}
+            :modules {:main {:entries [shadow-cljs-example.main]}}}
   :node-test {:target :node-test
               :output-to "target/public/node-test.js"}
   :node-test-dev {:target :node-test

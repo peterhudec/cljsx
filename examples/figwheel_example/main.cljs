@@ -1,10 +1,10 @@
-(ns examples.shadow-cljs
-  (:require ["react" :as react]
-            ["react-dom" :as react-dom]
+(ns figwheel-example.main
+  (:require [react :as react]
+            [react-dom :as react-dom]
             [cljsx.core :refer [react>>> defcomponent]]))
 
-(def common-props {:style {:color "olive"
-                           :background "honeydew"
+(def common-props {:style {:color "purple"
+                           :background "lavenderblush"
                            :borderRadius "0.2em"
                            :padding "0.4em"}})
 
@@ -39,7 +39,7 @@
         "Enjoy!"))
 
  (defcomponent App _
-   (<div :style {:border "3px dashed olive"
+   (<div :style {:border "3px dashed purple"
                  :padding "2rem"
                  :borderRadius "1rem"
                  :maxWidth "400px"

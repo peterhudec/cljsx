@@ -1,5 +1,6 @@
 (defproject cljsx "0.0.1-SNAPSHOT"
   :description "Cool new project to do things and stuff"
+  :source-paths ["src" "test" "examples"]
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.520"]]
   :aliases {"fig"
@@ -9,7 +10,6 @@
             ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]}
   :profiles {:dev {:resource-paths ["target"]
                    :clean-targets ^{:protect false} ["target"]
-                   ;; TODO: Move midje to a separate profile.
                    :dependencies [[midje "1.9.8"]
                                   ;; If we don't explicitly require tools.reader
                                   ;; we get the "reader-error does not exist"

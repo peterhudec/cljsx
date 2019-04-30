@@ -1,10 +1,10 @@
-(ns examples.figwheel
-  (:require [react :as react]
-            [react-dom :as react-dom]
+(ns shadow-cljs-example.main
+  (:require ["react" :as react]
+            ["react-dom" :as react-dom]
             [cljsx.core :refer [react>>> defcomponent]]))
 
-(def common-props {:style {:color "purple"
-                           :background "lavenderblush"
+(def common-props {:style {:color "olive"
+                           :background "honeydew"
                            :borderRadius "0.2em"
                            :padding "0.4em"}})
 
@@ -39,7 +39,7 @@
         "Enjoy!"))
 
  (defcomponent App _
-   (<div :style {:border "3px dashed purple"
+   (<div :style {:border "3px dashed olive"
                  :padding "2rem"
                  :borderRadius "1rem"
                  :maxWidth "400px"
@@ -51,4 +51,3 @@
  (react-dom/render
   (<App>)
   (js/document.querySelector "#mount-point")))
-

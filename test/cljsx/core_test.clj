@@ -1,7 +1,6 @@
 (ns cljsx.core-test
   (:require [midje.sweet :refer :all]
-            [cljsx.core :refer :all]
-            [cljsx.conversion]))
+            [cljsx.core :refer :all]))
 
 (fact
  "list->tag&props&children"

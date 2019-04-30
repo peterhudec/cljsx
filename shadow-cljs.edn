@@ -6,6 +6,7 @@
  :dependencies
  [[binaryage/devtools "0.9.10"]
   [cider/cider-nrepl "0.21.0"]
+  [refactor-nrepl "2.4.0"]
   [midje "1.7.0"]
   [smidjen "0.2.3"]]
 
@@ -18,8 +19,7 @@
             :asset-path "/example/js"
             :modules {:main {:entries [example]}}}
   :node-test {:target :node-test
-              :output-to "public/node-test.js"
-              }
+              :output-to "public/node-test.js"}
   :node-test-dev {:target :node-test
                   :output-to "public/node-test.js"
                   :autorun true}}}

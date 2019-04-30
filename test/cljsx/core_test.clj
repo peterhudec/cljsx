@@ -1,37 +1,37 @@
 (ns cljsx.core-test
-  (:require [midje.sweet :refer :all]
-            [cljsx.core :refer :all]))
+  (:require [midje.sweet :refer [fact facts throws]]
+            [cljsx.core :as sut]))
 
 (fact
- "list->tag&props&children"
- (list->tag&props&children
+ "sut/list->tag&props&children"
+ (sut/list->tag&props&children
   '(<> foo bar))
  => '(<> nil (foo bar))
 
- (list->tag&props&children
+ (sut/list->tag&props&children
   '(foo bar baz))
  => nil
 
- (list->tag&props&children
+ (sut/list->tag&props&children
   '(<foo> bar baz))
  => '("foo" nil (bar baz))
 
- (list->tag&props&children
+ (sut/list->tag&props&children
   '(<foo > bar baz))
  => (throws #"The first item must be a keyword or a spread!")
 
- (list->tag&props&children
+ (sut/list->tag&props&children
   '(<foo :a "A" :b > bar baz))
  => '("foo" ({:a "A" :b true}) (bar baz))
 
- (list->tag&props&children
+ (sut/list->tag&props&children
   '(<foo :a "A" :b ... x :d :e "E" >
          bar baz))
  => '("foo"
       ({:a "A" :b true} x {:d true :e "E"})
       (bar baz))
 
- (list->tag&props&children
+ (sut/list->tag&props&children
   '(<foo :a "A" :b
          ... x
          :d :e "E"
@@ -41,7 +41,7 @@
       ({:a "A" :b true} x {:d true :e "E"} y)
       (bar baz))
 
- (list->tag&props&children
+ (sut/list->tag&props&children
   '(<foo :a "A" :b
          ... x
          :d :e "E"
@@ -53,7 +53,7 @@
       (bar baz))
  )
 
-(defjsx my> my-jsx my-fragment)
+(sut/defjsx my> my-jsx my-fragment)
 
 (defn my-jsx [tag props & children]
   {:tag tag

@@ -1,11 +1,6 @@
 (ns example
-  (:require-macros
-   [pokus]
-   [cljsx.core])
   (:require
-   [cljsx.core :as cc]
-   [pokus :as pokus]
-   [cljsx :as cljsx]
+   [cljsx.core :as cljsx]
    ["react" :as react]
    ["react-dom" :as react-dom]))
 

@@ -1,7 +1,7 @@
 (ns cljsx.react-test
   (:require
    [smidjen.core :refer-macros [facts fact]]
-   [cljsx :as cljsx]
+   [cljsx.core :as cljsx]
    ["react" :as react]
    ["react-dom/server" :as react-dom]
    ["./components" :refer [JSComponent]]))

@@ -126,16 +126,16 @@
  => '(x y z))
 
 (fact
- (str "sut/list->props&children splits a list on the first `'>`"
+ (str "sut/list->props+children splits a list on the first `'>`"
       "occurence but won't keep the actual `'>` separator")
- (sut/list->props&children '(a b c))
+ (sut/list->props+children '(a b c))
  => '[(a b c) nil]
 
- (sut/list->props&children '(a b c >))
+ (sut/list->props+children '(a b c >))
  => '[(a b c) nil]
 
- (sut/list->props&children '(a b c > d e f))
+ (sut/list->props+children '(a b c > d e f))
  => '[(a b c) (d e f)]
 
- (sut/list->props&children '(a b c > d e f > i j k))
+ (sut/list->props+children '(a b c > d e f > i j k))
  => '[(a b c) (d e f > i j k)])

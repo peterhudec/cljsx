@@ -3,35 +3,35 @@
             [cljsx.core :as sut]))
 
 (fact
- "sut/list->tag&props&children"
- (sut/list->tag&props&children
+ "sut/list->tag+props+children"
+ (sut/list->tag+props+children
   '(<> foo bar))
  => '(<> nil (foo bar))
 
- (sut/list->tag&props&children
+ (sut/list->tag+props+children
   '(foo bar baz))
  => nil
 
- (sut/list->tag&props&children
+ (sut/list->tag+props+children
   '(<foo> bar baz))
  => '("foo" nil (bar baz))
 
- (sut/list->tag&props&children
+ (sut/list->tag+props+children
   '(<foo > bar baz))
  => (throws #"The first item must be a keyword or a spread!")
 
- (sut/list->tag&props&children
+ (sut/list->tag+props+children
   '(<foo :a "A" :b > bar baz))
  => '("foo" ({:a "A" :b true}) (bar baz))
 
- (sut/list->tag&props&children
+ (sut/list->tag+props+children
   '(<foo :a "A" :b ... x :d :e "E" >
          bar baz))
  => '("foo"
       ({:a "A" :b true} x {:d true :e "E"})
       (bar baz))
 
- (sut/list->tag&props&children
+ (sut/list->tag+props+children
   '(<foo :a "A" :b
          ... x
          :d :e "E"
@@ -41,7 +41,7 @@
       ({:a "A" :b true} x {:d true :e "E"} y)
       (bar baz))
 
- (sut/list->tag&props&children
+ (sut/list->tag+props+children
   '(<foo :a "A" :b
          ... x
          :d :e "E"

@@ -123,7 +123,7 @@
        ;; Return nil rather than empty list
        (#(if (empty? %) nil %))))
 
-(defn list->props&children [l]
+(defn list->props+children [l]
   (let [[x [_ & xs]] (split-with #(not= % '>) l)]
     [x xs]))
 

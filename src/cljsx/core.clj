@@ -4,13 +4,13 @@
    [cljsx.tag :as tag]
    [cljsx.props :as props]))
 
-(defn list->tag&props&children [[x & xs]]
+(defn list->tag+props+children [[x & xs]]
   (let [str-tag (str x)]
     (if (tag/fragment? str-tag)
       (list '<> nil xs)
       (if-let [tag (tag/props? str-tag)]
         (let [[props
-               children] (props/list->props&children xs)]
+               children] (props/list->props+children xs)]
           (list
            tag
            (props/props->mergelist props)
@@ -36,7 +36,7 @@
        (symbol? (first l))))
 
 (defn visit-function-call [cljs-env jsx-name fragment-name l]
-  (if-let [[tag proplist children] (list->tag&props&children l)]
+  (if-let [[tag proplist children] (list->tag+props+children l)]
     (let [jsx-symbol (symbol jsx-name)
           resolved-tag (if (= tag '<>)
                          (symbol fragment-name)

@@ -1,5 +1,6 @@
 (ns cljsx.core
   (:require
+   [clojure.spec.alpha :as s]
    [clojure.walk :as w]
    [cljsx.tag :as tag]
    [cljsx.props :as props]))
@@ -221,4 +222,92 @@
 
 (defjsx >>> jsx jsx-fragment)
 (defjsx react>>> react/createElement react/Fragment)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(s/def ::spread-operator #{'...})
+
+(s/def ::spreadable (s/or :reference symbol?
+                          :literal map?))
+
+(s/def ::value (s/and (complement #{'...})
+                      (complement keyword?)))
+
+(s/def ::attr (s/cat :name keyword?
+                     :value (s/? ::value)))
+
+(s/def ::spread (s/cat :spread-operator ::spread-operator
+                       :spread-value ::spreadable))
+
+(s/def ::prop (s/alt :attribute ::attr
+                     :spread ::spread))
+
+(s/def ::fragment #{'<>})
+
+(s/def ::simple-intrinsic-tag (s/and symbol?
+                                     #(re-matches #"<[a-z0-9]+>" (str %))))
+
+(s/def ::props-intrinsic-tag (s/and symbol?
+                                     #(re-matches #"<[a-z0-9]+" (str %))))
+
+(s/def ::simple-reference-tag
+  (s/and symbol?
+         #(->> %
+               str
+               (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*>"))))
+
+(s/def ::props-reference-tag
+  (s/and symbol?
+         #(->> %
+               str
+               (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*"))))
+
+(s/def ::simple-tag (s/alt :fragment-tag ::fragment
+                           :intrinsic-tag ::simple-intrinsic-tag
+                           :reference-tag ::simple-reference-tag))
+
+(s/def ::children (s/* (constantly true)))
+
+(s/def ::simple-jsx-expression
+  (s/cat :tag ::simple-tag
+         :children ::children))
+
+(s/def ::props-tag (s/alt :intrinsic-tag ::props-intrinsic-tag
+                          :reference-tag ::props-reference-tag))
+
+(s/def ::props-tag-end #{'>})
+
+(s/def ::props-jsx-expression (s/cat :tag-start ::props-tag
+                                     :props (s/* ::prop)
+                                     :tag-end ::props-tag-end
+                                     :children ::children))
+
+(s/conform ::props-jsx-expression '(<foo ... props :a "AAA" > foo bar baz))
+(s/conform ::props-jsx-expression '(<foo :a "AAA" > foo bar baz))
+
+(s/def ::jsx-expression (s/or :simple-jsx-expression ::simple-jsx-expression
+                              :props-jsx-expression ::props-jsx-expression))
+
+(s/def ::not-tag #(->> %
+                       str
+                       (re-matches #"<.+>?")
+                       not))
+
+(s/def ::s-xpression (s/cat :first ::not-tag
+                            :rest (s/* (constantly true))))
+
+(s/def ::node (s/or :s-expression ::s-xpression
+                    :jsx-expression ::jsx-expression))
+
+(s/conform ::node '(foo bar baz))
+(s/conform ::node '(<foo> bar))
+(s/conform ::node '(<> foo bar baz))
+(s/conform ::node '(<simple> foo bar baz))
+(s/conform ::node '(<---> foo bar baz))
+(s/conform ::node '(<foo foo bar baz))
+(s/conform ::node '(<foo > foo bar baz))
+(s/conform ::node '(<foo ... props :a "AAA" > foo bar baz))
+
+;; TODO: Recursion
+
 

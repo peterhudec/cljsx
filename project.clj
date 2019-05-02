@@ -18,6 +18,7 @@
                                   [org.clojure/tools.reader "1.2.2"]
                                   [com.bhauman/figwheel-main "0.2.0"]
                                   [com.bhauman/rebel-readline-cljs "0.1.4"]
+                                  [expound "0.7.2"]
                                   [cljsjs/react "16.8.3-0"]
                                   [cljsjs/react-dom "16.8.3-0"]]}
              :midje {}})

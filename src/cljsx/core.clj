@@ -266,11 +266,20 @@
                            :intrinsic-tag ::simple-intrinsic-tag
                            :reference-tag ::simple-reference-tag))
 
-(s/def ::children (s/* (constantly true)))
+;; (s/def ::children (s/* (constantly true)))
+(s/def ::children (s/* (s/spec ::node)))
 
-(s/def ::simple-jsx-expression
-  (s/cat :tag ::simple-tag
-         :children ::children))
+(s/conform ::children '(<foo>))
+(s/conform ::children '((<foo>) (<bar>)))
+
+(s/def ::simple-jsx-expression (s/cat :tag ::simple-tag
+                                      :children ::children
+                                      ))
+
+(s/conform ::simple-jsx-expression '(<foo>))
+(s/conform ::simple-jsx-expression '(<foo> child))
+(s/conform ::simple-jsx-expression '(<foo> (foo bar)))
+(s/conform ::simple-jsx-expression '(<foo> (<bar>)))
 
 (s/def ::props-tag (s/alt :intrinsic-tag ::props-intrinsic-tag
                           :reference-tag ::props-reference-tag))
@@ -296,9 +305,14 @@
 (s/def ::s-xpression (s/cat :first ::not-tag
                             :rest (s/* (constantly true))))
 
-(s/def ::node (s/or :s-expression ::s-xpression
-                    :jsx-expression ::jsx-expression))
+(s/def ::not-jsx-expression (s/and (complement list?)
+                                   ))
 
+(s/def ::node (s/or :s-expression ::s-xpression
+                    :jsx-expression ::jsx-expression
+                    :any (constantly true)))
+
+(s/conform ::node 'foo)
 (s/conform ::node '(foo bar baz))
 (s/conform ::node '(<foo> bar))
 (s/conform ::node '(<> foo bar baz))
@@ -309,5 +323,10 @@
 (s/conform ::node '(<foo ... props :a "AAA" > foo bar baz))
 
 ;; TODO: Recursion
+
+(s/conform ::simple-jsx-expression '(<foo>))
+(s/conform ::simple-jsx-expression '(<foo> child))
+(s/conform ::simple-jsx-expression '(<foo> (foo bar)))
+(s/conform ::simple-jsx-expression '(<foo> (<bar>)))
 
 

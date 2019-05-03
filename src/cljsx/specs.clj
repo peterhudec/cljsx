@@ -5,11 +5,22 @@
 
 (s/def ::spread-operator #{'...})
 
+(defn even-vector? [x]
+  (and (vector? x)
+       (= (mod (count x) 2) 0)))
+
+(s/def ::even-vector (s/coll-of ::form
+                                :kind even-vector?))
+
 (s/def ::spreadable (s/or :reference symbol?
-                          :literal map?))
+                          :map ::map
+                          :even-vector ::even-vector
+                          :jsx ::jsx-expression
+                          :s-expression ::s-expression))
 
 (s/def ::value (s/and (complement #{'...})
-                      (complement keyword?)))
+                      (complement keyword?)
+                      ::form))
 
 (s/def ::attr (s/cat :name keyword?
                      :value (s/? ::value)))

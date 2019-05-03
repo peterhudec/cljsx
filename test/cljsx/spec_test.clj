@@ -422,7 +422,7 @@
   (s/valid? ::sut/forms
             '((+ 1 2 3)
               (<> b c))) => true
-  
+
   (s/valid? ::sut/forms
             '((+ 1 2 3)
               (<a> b c))) => true

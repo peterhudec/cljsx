@@ -3,7 +3,8 @@
    [clojure.spec.alpha :as s]
    [clojure.walk :as w]
    [cljsx.tag :as tag]
-   [cljsx.props :as props]))
+   [cljsx.props :as props]
+   [cljsx.specs :as specs]))
 
 (defn list->tag+props+children [[x & xs]]
   (let [str-tag (str x)]
@@ -93,7 +94,10 @@
                                      %))
             wrap-in-do))
      (. (var ~macro-name) (setMacro))
-     (var ~macro-name)))
+     (var ~macro-name)
+     (s/fdef ~macro-name
+       :args :cljsx.specs/forms
+       :ret any?)))
 
 (defn fnjs* [fn-args]
   `(fn [& more#]
@@ -222,4 +226,3 @@
 
 (defjsx >>> jsx jsx-fragment)
 (defjsx react>>> react/createElement react/Fragment)
-

@@ -18,6 +18,7 @@
 
  (sut/list->tag+props+children
   '(<foo > bar baz))
+  ;; FIXME: This should not trhow
  => (throws #"The first item must be a keyword or a spread!")
 
  (sut/list->tag+props+children
@@ -53,23 +54,23 @@
       (bar baz))
  )
 
-(sut/defjsx my> my-jsx my-fragment)
+(sut/defjsx dummy>>> dummy-jsx dummy-fragment)
 
-(defn my-jsx [tag props & children]
+(defn dummy-jsx [tag props & children]
   {:tag tag
    :props props
    :children (into [] children)})
 
-(def my-fragment "MY FRAGMENT")
+(def dummy-fragment "MY FRAGMENT")
 
 (fact
  "Custom JSX"
- (my>
+ (dummy>>>
   (+ 100 10 1))
  =>
  111
 
- (my>
+ (dummy>>>
   (<foo> "child-1"
          "child-2"))
  =>
@@ -77,15 +78,15 @@
   :props nil
   :children ["child-1" "child-2"]}
 
- (my>
+ (dummy>>>
   (<> "child-1"
       "child-2"))
  =>
- {:tag my-fragment
+ {:tag dummy-fragment
   :props nil
   :children ["child-1" "child-2"]}
 
- (my>
+ (dummy>>>
   (<foo> "foo-child-1"
          (<bar> "bar-child-1"
                 "bar-child-2")
@@ -100,7 +101,7 @@
                          "bar-child-2"]}
              "foo-child-3"]}
 
- (my>
+ (dummy>>>
   (<foo :a "A" :b "B" :c "C"
         ... {:a "AA"}
         :c "CC" >
@@ -112,7 +113,7 @@
           :c "CC"}
   :children ["foo-child"]}
 
- (my>
+ (dummy>>>
   (let [bar (<bar>)
         Baz "BAZ"]
     (<foo> "foo"
@@ -131,7 +132,7 @@
               :children ["baz"]}
              "foo"]}
 
- (my>
+ (dummy>>>
   (let [bar (<bar>)
         Baz "BAZ"]
     (<> "foo"
@@ -139,7 +140,7 @@
            (<Baz> "baz")
            "foo")))
  =>
- {:tag my-fragment
+ {:tag dummy-fragment
   :props nil
   :children ["foo"
              {:tag "bar"
@@ -150,7 +151,7 @@
               :children ["baz"]}
              "foo"]}
 
- (my>
+ (dummy>>>
   (map (fn [x] (<foo> x))
        ["A" "B" "C"]))
  =>
@@ -158,15 +159,15 @@
    {:tag "foo", :props nil, :children ["B"]}
    {:tag "foo", :props nil, :children ["C"]})
 
- (my>
+ (dummy>>>
   (map (fn [x] (<> x))
        ["A" "B" "C"]))
  =>
- `({:tag ~my-fragment, :props nil, :children ["A"]}
-   {:tag ~my-fragment, :props nil, :children ["B"]}
-   {:tag ~my-fragment, :props nil, :children ["C"]})
+ `({:tag ~dummy-fragment, :props nil, :children ["A"]}
+   {:tag ~dummy-fragment, :props nil, :children ["B"]}
+   {:tag ~dummy-fragment, :props nil, :children ["C"]})
 
- (my>
+ (dummy>>>
   (map (fn [Tag] (<Tag> "child"))
        ["a" "b" "c"]))
  =>
@@ -174,7 +175,7 @@
    {:tag "b", :props nil, :children ["child"]}
    {:tag "c", :props nil, :children ["child"]})
 
- (my>
+ (dummy>>>
   (map #(<foo :prop % > %)
        ["a" "b" "c"]))
  =>
@@ -182,15 +183,15 @@
    {:tag "foo", :props {:prop "b"}, :children ["b"]}
    {:tag "foo", :props {:prop "c"}, :children ["c"]})
 
- (my>
+ (dummy>>>
   (map #(<> %)
        ["a" "b" "c"]))
  =>
- `({:tag ~my-fragment, :props nil, :children ["a"]}
-   {:tag ~my-fragment, :props nil, :children ["b"]}
-   {:tag ~my-fragment, :props nil, :children ["c"]})
+ `({:tag ~dummy-fragment, :props nil, :children ["a"]}
+   {:tag ~dummy-fragment, :props nil, :children ["b"]}
+   {:tag ~dummy-fragment, :props nil, :children ["c"]})
 
- (my>
+ (dummy>>>
   (let [Foo "FOO"]
     (map #(<Foo :prop % > %)
          ["a" "b" "c"])))
@@ -199,11 +200,12 @@
       {:tag "FOO", :props {:prop "c"}, :children ["c"]})
 
  (macroexpand
-  '(my>
+  '(dummy>>>
     (<foo> "foo")
     (<bar> "bar")
     (<baz> "baz")))
  =>
- '(do (my-jsx "foo" nil "foo")
-      (my-jsx "bar" nil "bar")
-      (my-jsx "baz" nil "baz")))
+ '(do (dummy-jsx "foo" nil "foo")
+      (dummy-jsx "bar" nil "bar")
+      (dummy-jsx "baz" nil "baz")))
+

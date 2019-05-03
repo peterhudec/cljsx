@@ -24,17 +24,23 @@
 
 (s/def ::spread-val (s/or :reference symbol?
                           :map ::map
+                          :even-vector ::even-vector
                           :jsx ::jsx-expression
-                          :s-expression ::s-expression
-                          :even-vector ::even-vector))
+                          :s-expression ::s-expression))
 
-(s/def ::prop (s/alt :attr ::attr
+(expound/defmsg ::spread-val (str "Value of spread must be a symbol, map, "
+                                  "vector with even number of items, s-expression "
+                                  "or jsx-expression."))
+
+(s/def ::prop (s/alt :attribute ::attr
                      :spread ::spread))
 
 (s/def ::fragment #{'<>})
 
 (s/def ::simple-intrinsic-tag (s/and symbol?
                                      #(re-matches #"<[a-z0-9]+>" (str %))))
+
+(expound/defmsg ::simple-intrinsic-tag "Invalid JSX tag name")
 
 (s/def ::props-intrinsic-tag (s/and symbol?
                                     #(re-matches #"<[a-z0-9]+" (str %))))
@@ -72,22 +78,16 @@
 (s/def ::simple-jsx-expression (s/cat :tag ::simple-tag
                                       :children ::forms))
 
-(s/def ::invalid-first-prop (s/and (complement keyword?)
-                                   (complement #{'>})
-                                   (complement #{'...})))
-
 (s/def ::props (s/* ::prop))
 
 (s/def ::props-jsx-expression (s/cat :tag-start ::props-tag
+                                     ;; :props (s/* ::prop)
                                      :props ::props
                                      :tag-end ::props-tag-end
                                      :children ::forms))
 
-(s/def ::jsx-expression
-  ;; This is to not confuse a vector with JSX in spread value
-  (s/and seq?
-         (s/or :simple-jsx-expression ::simple-jsx-expression
-               :props-jsx-expression ::props-jsx-expression)))
+(s/def ::jsx-expression (s/or :simple-jsx-expression ::simple-jsx-expression
+                              :props-jsx-expression ::props-jsx-expression))
 
 (defn- tag? [x]
   (and (symbol? x)
@@ -118,3 +118,5 @@
 (s/def ::coll (s/coll-of ::form
                          :kind non-jsx-coll?))
 
+;;;;;;;;;;;;;
+(s/explain ::props '(:a :b :c))

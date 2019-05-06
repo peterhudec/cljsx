@@ -1,6 +1,8 @@
 (ns cljsx.specs
   (:require
+   [clojure.reflect :as r]
    [clojure.spec.alpha :as s]
+   [clojure.core.specs.alpha :as cs]
    [expound.alpha :as expound]))
 
 (s/def ::attr-val (s/and (complement #{'...})
@@ -117,4 +119,43 @@
 
 (s/def ::coll (s/coll-of ::form
                          :kind non-jsx-coll?))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Specs for component macros ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(s/def ::fn-args (:args (s/get-spec 'clojure.core/fn)))
+
+;; https://github.com/clojure/core.specs.alpha/blob/master/src/main/clojure/clojure/core/specs/alpha.clj#L81
+(s/def ::fn-body (s/alt :prepost+body (s/cat :prepost map?
+                                             :body (s/+ any?))
+                        :body (s/* any?)))
+
+(s/def ::component-name (s/spec (s/cat :quote #{'quote}
+                                       :symbol simple-symbol?)))
+
+
+(s/def ::component-props (s/or :local-name ::cs/local-name
+                                :map-binding ::cs/map-binding-form))
+
+(s/def ::component-args (s/cat :quoted-name (s/? ::component-name)
+                               :props ::component-props
+                               :body ::fn-body))
+
+(s/def ::component+js-args (s/cat :quoted-name (s/? ::component-name)
+                                  :clj-props ::component-props
+                                  :js-props ::component-props
+                                  :body ::fn-body))
+
+(s/fdef cljsx.core/component
+  :args ::component-args
+  :ret any?)
+
+(s/fdef cljsx.core/component-js
+  :args ::component-args
+  :ret any?)
+
+(s/fdef cljsx.core/component+js
+  :args ::component+js-args
+  :ret any?)
 

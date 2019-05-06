@@ -60,3 +60,8 @@
   (fn [props]
     (f (jsify-props props))))
 
+
+(defn js-obj-or-map? [x]
+  (or (map? x)
+      (identical? (type x) js/Object)))
+

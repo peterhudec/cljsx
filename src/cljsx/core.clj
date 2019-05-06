@@ -142,22 +142,30 @@
         ;; it's a CLJ value.
         false))))
 
+;; TODO: This is just for debugging. Convert it to identity when done.
 (defn jsify-props [props]
   (reduce (fn [a [k v]]
             (assoc a k [:js v]))
           {}
           props))
 
+;; TODO: This is just for debugging. Convert it to identity when done.
 (defn cljify-props [props]
   (reduce (fn [a [k v]]
             (assoc a k [:clj v]))
           {}
           props))
 
-(defn- component* [interceptor-symbol [props & decls]]
-  (let [func `(fn [~props] ~@decls)]
-    `(fn [props#]
-       (~func (~interceptor-symbol props#)))))
+(defn component-impl [interceptor-sym args]
+  (let [{:keys [props body] :as conformed} (s/conform ::specs/component-args args)
+        fn-name (get-in conformed [:quoted-name :symbol])
+        possible-fn-name (if fn-name [fn-name] [])
+        props' (s/unform ::specs/component-props props)
+        body' (s/unform ::specs/fn-body body)
+        func `(fn [~props'] ~@body')]
+    `(fn ~@possible-fn-name [props#]
+       (clojure.core/assert (cljsx.core/js-obj-or-map? props#))
+       (~func (~interceptor-sym props#)))))
 
 (defmacro component
   "Defines a function which takes an associative as its single argument.
@@ -166,7 +174,7 @@
   The first argument should be a symbol or a destructuring map,
   all the other arguments are the body of the function."
   [& more]
-  (component* 'cljsx.core/cljify-props more))
+  (component-impl 'cljsx.core/cljify-props more))
 
 (defmacro component-js
   "Defines a function which takes an associative as its single argument.
@@ -175,7 +183,7 @@
   The first argument should be a symbol or a destructuring map,
   all the other arguments are the body of the function."
   [& more]
-  (component* 'cljsx.core/jsify-props more))
+  (component-impl 'cljsx.core/jsify-props more))
 
 (defmacro component+js
   "Defines a function which takes an associative as its single argument.
@@ -185,9 +193,16 @@
   the second argument is the JS map.
   Both should be a symbol or a destructuring map.
   all the other arguments are the body of the function."
-  [clj-props js-props & decls]
-  (let [func `(fn [~clj-props ~js-props] ~@decls)]
-    `(fn [props#]
+  [& args]
+  (let [{:keys [clj-props js-props body] :as conformed} (s/conform ::specs/component+js-args args)
+        fn-name (get-in conformed [:quoted-name :symbol])
+        possible-fn-name (if fn-name [fn-name] [])
+        clj-props' (s/unform ::specs/component-props clj-props)
+        js-props' (s/unform ::specs/component-props js-props)
+        body' (s/unform ::specs/fn-body body)
+        func `(fn [~clj-props' ~js-props'] ~@body')]
+    `(fn ~@possible-fn-name [props#]
+       (clojure.core/assert (cljsx.core/js-obj-or-map? props#))
        (~func
         (cljsx.core/cljify-props props#)
         (cljsx.core/jsify-props props#)))))
@@ -199,6 +214,7 @@
         func `(fn [~props] ~@decls')
         name-with-meta (with-meta name (merge (meta name) docmeta))]
     `(defn ~name-with-meta [props#]
+       (clojure.core/assert (cljsx.core/js-obj-or-map? props#))
        (~func (~interceptor-symbol props#)))))
 
 (defmacro defcomponent
@@ -220,6 +236,7 @@
         func `(fn [~clj-props ~js-props] ~@decls')
         name-with-meta (with-meta name (merge (meta name) docmeta))]
     `(defn ~name-with-meta [props#]
+       (clojure.core/assert (cljsx.core/js-obj-or-map? props#))
        (~func
         (cljsx.core/cljify-props props#)
         (cljsx.core/jsify-props props#)))))

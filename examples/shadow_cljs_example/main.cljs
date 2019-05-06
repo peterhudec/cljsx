@@ -1,7 +1,7 @@
 (ns shadow-cljs-example.main
   (:require ["react" :as react]
             ["react-dom" :as react-dom]
-            [cljsx.core :refer [react>>> defcomponent]]))
+            [cljsx.core :refer [react>>> defcomponent component component+js]]))
 
 (def common-props {:style {:color "olive"
                            :background "honeydew"

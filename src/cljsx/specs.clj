@@ -5,25 +5,18 @@
    [clojure.core.specs.alpha :as cs]
    [expound.alpha :as expound]))
 
-(s/def ::attr-val (s/and (complement #{'...})
-                         (complement keyword?)
-                         ::form))
-
-(s/def ::attr (s/cat :name keyword?
-                     :val (s/? ::attr-val)))
-
 (s/def ::spread (s/cat :operator ::spread-operator
                        :val ::spread-val))
 
 (s/def ::spread-operator #{'...})
+(expound/defmsg ::spread-operator
+  "The spread operator `...`.")
 
 (defn- even-vector? [x]
   (and (vector? x)
        (= (mod (count x) 2) 0)))
-
 (s/def ::even-vector (s/coll-of ::form
                                 :kind even-vector?))
-
 (expound/defmsg ::even-vector
   "Vector with even number of items e.g. [a b], [a b c d] or [].")
 
@@ -35,7 +28,7 @@
 (s/def ::spread-reference spread-reference?)
 
 (expound/defmsg ::spread-reference
-  "Any symbol other than > (closing tag) or ... (spread operator).")
+  "Any symbol other than `>` (closing tag) or `...` (spread operator).")
 
 (s/def ::spread-val (s/or :reference ::spread-reference
                           :map ::map
@@ -63,7 +56,7 @@
 (s/def ::fragment fragment-tag?)
 
 (expound/defmsg ::fragment
-  "JSX fragment tag <>.")
+  "JSX fragment tag `<>`.")
 
 (defn- intrinsic-tag-without-props? [x]
   (re-matches #"<[a-z0-9]+>" (str x)))
@@ -101,8 +94,8 @@
   (s/and symbol?
          reference-tag-with-props?
          #_#(->> %
-               str
-               (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*"))))
+                 str
+                 (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*"))))
 
 (s/def ::simple-tag (s/alt :fragment-tag ::fragment
                            :intrinsic-tag ::simple-intrinsic-tag
@@ -111,7 +104,14 @@
 (s/def ::props-tag (s/alt :intrinsic-tag ::props-intrinsic-tag
                           :reference-tag ::props-reference-tag))
 
-(s/def ::props-tag-end #{'>})
+(def props-tag-end? #{'>})
+(s/def ::props-tag-end props-tag-end?)
+(expound/defmsg ::props-tag-end
+  (str
+   "End of JSX props tag "
+   "(either the closing tag `>` is missing, "
+   "or the first prop is neither a keyword, "
+   "nor the `...` spread operator)."))
 
 (def primitive? (complement coll?))
 (s/def ::primitive primitive?)
@@ -123,22 +123,17 @@
                :primitive ::primitive
                :s-expression ::s-expression
                :map ::map
-               :coll ::coll
-               ))
+               :coll ::coll))
 
 (s/def ::forms (s/* (s/spec ::form)))
 
 (s/def ::simple-jsx-expression (s/cat :tag ::simple-tag
                                       :children ::forms))
 
-(s/def ::invalid-first-prop (s/and (complement keyword?)
-                                   (complement #{'>})
-                                   (complement #{'...})))
-
 (s/def ::props-jsx-expression (s/cat :tag-start ::props-tag
-                                         :props ::props
-                                         :tag-end ::props-tag-end
-                                         :children ::forms))
+                                     :props ::props
+                                     :tag-end ::props-tag-end
+                                     :children ::forms))
 
 (s/def ::jsx-expression
   ;; We need to check for seq?, otherwise vectors would match as
@@ -147,7 +142,6 @@
          ;; Props expression is first so that its errors show up first
          (s/or :props-jsx-expression ::props-jsx-expression
                :simple-jsx-expression ::simple-jsx-expression)))
-
 (expound/defmsg ::jsx-expression
   "JSX expression e.g. (<foo>), (<Bar> child) or (<baz.Bing :x y > child)")
 
@@ -180,11 +174,10 @@
   (and (coll? x)
        (not (map? x))
        (not (jsx? x))))
-
 (s/def ::coll (s/coll-of ::form
                          :kind any-collection-which-is-not-a-jsx-expression?))
-
-(expound/defmsg ::coll "Any collection which is not a JSX expression.")
+(expound/defmsg ::coll
+  "Any collection which is not a JSX expression e.g. (a b c) or #{a b c}")
 
 (s/def ::fn-args (:args (s/get-spec 'clojure.core/fn)))
 
@@ -196,9 +189,8 @@
 (s/def ::component-name (s/spec (s/cat :quote #{'quote}
                                        :symbol simple-symbol?)))
 
-
 (s/def ::component-props (s/or :local-name ::cs/local-name
-                                :map-binding ::cs/map-binding-form))
+                               :map-binding ::cs/map-binding-form))
 
 (s/def ::component-args (s/cat :quoted-name (s/? ::component-name)
                                :props ::component-props
@@ -215,10 +207,10 @@
                                   :body ::fn-body))
 
 (s/def ::defcomponent+js-args (s/cat :fn-name simple-symbol?
-                                  :docstring (s/? string?)
-                                  :clj-props ::component-props
-                                  :js-props ::component-props
-                                  :body ::fn-body))
+                                     :docstring (s/? string?)
+                                     :clj-props ::component-props
+                                     :js-props ::component-props
+                                     :body ::fn-body))
 
 (s/fdef cljsx.core/component
   :args ::component-args

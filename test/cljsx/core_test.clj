@@ -18,8 +18,7 @@
 
  (sut/list->tag+props+children
   '(<foo > bar baz))
-  ;; FIXME: This should not trhow
- => (throws #"The first item must be a keyword or a spread!")
+  => '("foo" nil (bar baz))
 
  (sut/list->tag+props+children
   '(<foo :a "A" :b > bar baz))

@@ -86,7 +86,8 @@
                                      :children ::forms))
 
 (s/def ::jsx-expression
-  ;; This is to not confuse a vector with JSX in spread value
+  ;; We need to check for seq?, otherwise vectors would match as
+  ;; expressions e.g [<foo> bar] would be a valid JSX expression.
   (s/and seq?
          (s/or :simple-jsx-expression ::simple-jsx-expression
                :props-jsx-expression ::props-jsx-expression)))
@@ -120,13 +121,9 @@
 (s/def ::coll (s/coll-of ::form
                          :kind non-jsx-coll?))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Specs for component macros ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (s/def ::fn-args (:args (s/get-spec 'clojure.core/fn)))
 
-;; https://github.com/clojure/core.specs.alpha/blob/master/src/main/clojure/clojure/core/specs/alpha.clj#L81
+;; https://github.com/clojure/core.specs.alpha/blob/master/src/main/clojure/clojure/core/specs/alpha.clj
 (s/def ::fn-body (s/alt :prepost+body (s/cat :prepost map?
                                              :body (s/+ any?))
                         :body (s/* any?)))

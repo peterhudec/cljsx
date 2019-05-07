@@ -2,29 +2,6 @@
   (:require [cljsx.props :as sut]
             [midje.sweet :refer [fact facts falsey throws truthy]]))
 
-(facts
- (str "Spread is only valid if it is followed by a symbol "
-      "other than `'...` or an associative data structure")
- (fact
-  "Valid spread"
-  (sut/valid-spread-operand? 'foo) => truthy
-  (sut/valid-spread-operand? {}) => truthy
-  (sut/valid-spread-operand? []) => truthy
-  (sut/valid-spread-operand? '(foo)) => truthy
-  (sut/valid-spread-operand? '#(+ 1 2)) => truthy)
- 
- (fact
-  "Invalid spread"
-  (sut/valid-spread-operand? "foo") => falsey
-  (sut/valid-spread-operand? #{}) => falsey
-  (sut/valid-spread-operand? ()) => falsey
-  (sut/valid-spread-operand? 123) => falsey
-  (sut/valid-spread-operand? :foo) => falsey
-  (sut/valid-spread-operand? '...) => falsey))
-
-(def spread-at-end-error
-  #"Invalid spread at the end of props")
-
 (fact
  "Split props on spread operator"
  (sut/split-spread '()) => '()
@@ -43,28 +20,8 @@
  => '((a b) (... xxx) (c d) (... yyy))
 
  (sut/split-spread '(a b ... xxx c d ... yyy e f))
- => '((a b) (... xxx) (c d) (... yyy) (e f))
+ => '((a b) (... xxx) (c d) (... yyy) (e f)))
 
- (sut/split-spread '(a b ...))
- => (throws #"Extraneous symbol in props")
-
- (sut/split-spread '(...))
- => (throws #"Extraneous symbol in props")
-
- (sut/split-spread '(a b ... ... c d))
- => (throws #"Invalid spread operand `...`")
-
- (sut/split-spread '(a b ... 123 c d))
- => (throws #"Invalid spread operand `123`")
-
- (sut/split-spread '(a b ... "foo" c d))
- => (throws #"Invalid spread operand `\"foo\"`")
-
- (sut/split-spread '(a b ... ... c d))
- => (throws #"Invalid spread operand `...`")
-
- (sut/split-spread '(a b ... :c c d ... :e))
- => (throws #"Invalid spread operand `:c`"))
 
 (facts
  "sut/props->map converts a list of props to a map "
@@ -101,9 +58,6 @@
 (fact
  (str "sut/props->mergelist takes a list of props and "
       "returns a list of expressions to be merged")
- (sut/props->mergelist ())
- => (throws #"The first item must be a keyword or a spread!")
-
  (sut/props->mergelist '(:a "A" :b "B"))
  => '({:a "A" :b "B"})
 

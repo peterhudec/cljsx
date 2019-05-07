@@ -20,12 +20,6 @@
         (if-let [tag (tag/simple? str-tag)]
           (list tag nil xs))))))
 
-;; TODO: Shouldn't this should be used somewhere?
-(defn- nil-when-empty [x]
-  (if (empty? x)
-    nil
-    x))
-
 (defn cljs-env? [&env]
   (let [ns (:ns &env)
         a (:js-globals &env)
@@ -33,12 +27,12 @@
         c (:cljs.analyzer/constants ns)]
     (boolean (or a b c))))
 
-(defn function-call? [l]
-  (and (seq? l)
-       (symbol? (first l))))
+(defn function-call? [args]
+  (and (seq? args)
+       (symbol? (first args))))
 
-(defn visit-function-call [cljs-env jsx-name fragment-name l]
-  (if-let [[tag proplist children] (list->tag+props+children l)]
+(defn visit-function-call [cljs-env jsx-name fragment-name args]
+  (if-let [[tag proplist children] (list->tag+props+children args)]
     (let [jsx-symbol (symbol jsx-name)
           resolved-tag (if (= tag '<>)
                          (symbol fragment-name)
@@ -69,7 +63,7 @@
 
         ;; Children
         ~@children))
-    l))
+    args))
 
 (defn visit-node [cljs-env jsx-name fragment-name node]
   (if (function-call? node)
@@ -79,10 +73,10 @@
                          node)
     node))
 
-(defn wrap-in-do [[x & more :as l]]
+(defn wrap-in-do [[x & more :as args]]
   (if (empty? more)
     x
-    `(do ~@l)))
+    `(do ~@args)))
 
 (defmacro defjsx [macro-name jsx-name fragment-name]
   `(do
@@ -142,25 +136,13 @@
         ;; it's a CLJ value.
         false))))
 
-;; TODO: This is just for debugging. Convert it to identity when done.
-(defn jsify-props [props]
-  (reduce (fn [a [k v]]
-            (assoc a k [:js v]))
-          {}
-          props))
-
-;; TODO: This is just for debugging. Convert it to identity when done.
-(defn cljify-props [props]
-  (reduce (fn [a [k v]]
-            (assoc a k [:clj v]))
-          {}
-          props))
-
+(def jsify-props identity)
+(def cljify-props identity)
 (def js-obj-or-map? map?)
 
 (defn component-impl [interceptor-sym args]
-  (let [{:keys [props body] :as conformed} (s/conform ::specs/component-args args)
-        fn-name (get-in conformed [:quoted-name :symbol])
+  (let [{:keys [props body] :as args'} (s/conform ::specs/component-args args)
+        fn-name (get-in args' [:quoted-name :symbol])
         possible-fn-name (if fn-name [fn-name] [])
         props' (s/unform ::specs/component-props props)
         body' (s/unform ::specs/fn-body body)
@@ -196,8 +178,8 @@
   Both should be a symbol or a destructuring map.
   all the other arguments are the body of the function."
   [& args]
-  (let [{:keys [clj-props js-props body] :as conformed} (s/conform ::specs/component+js-args args)
-        fn-name (get-in conformed [:quoted-name :symbol])
+  (let [{:keys [clj-props js-props body] :as args'} (s/conform ::specs/component+js-args args)
+        fn-name (get-in args' [:quoted-name :symbol])
         possible-fn-name (if fn-name [fn-name] [])
         clj-props' (s/unform ::specs/component-props clj-props)
         js-props' (s/unform ::specs/component-props js-props)

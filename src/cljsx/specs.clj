@@ -24,8 +24,20 @@
 (s/def ::even-vector (s/coll-of ::form
                                 :kind even-vector?))
 
-(s/def ::spread-val (s/or :reference #(and (symbol? %)
-                                           (not= % '>))
+(expound/defmsg ::even-vector
+  "Vector with even number of items e.g. [a b], [a b c d] or [].")
+
+(defn- spread-reference? [x]
+  (and (symbol? x)
+       (not= x '>)
+       (not= x '...)))
+
+(s/def ::spread-reference spread-reference?)
+
+(expound/defmsg ::spread-reference
+  "Any symbol other than > (closing tag) or ... (spread operator).")
+
+(s/def ::spread-val (s/or :reference ::spread-reference
                           :map ::map
                           :jsx ::jsx-expression
                           :s-expression ::s-expression
@@ -46,23 +58,49 @@
 
 (s/def ::props (s/* ::prop))
 
-(s/def ::fragment #{'<>})
+(def fragment-tag? #{'<>})
+
+(s/def ::fragment fragment-tag?)
+
+(expound/defmsg ::fragment
+  "JSX fragment tag <>.")
+
+(defn- intrinsic-tag-without-props? [x]
+  (re-matches #"<[a-z0-9]+>" (str x)))
 
 (s/def ::simple-intrinsic-tag (s/and symbol?
-                                     #(re-matches #"<[a-z0-9]+>" (str %))))
+                                     intrinsic-tag-without-props?))
+
+(expound/defmsg ::simple-intrinsic-tag
+  "JSX intrinsic tag without props e.g. <div>, <h1> or <foo>.")
+
+(defn- intrinsic-tag-with-props? [x]
+  (re-matches #"<[a-z0-9]+" (str x)))
 
 (s/def ::props-intrinsic-tag (s/and symbol?
-                                    #(re-matches #"<[a-z0-9]+" (str %))))
+                                    intrinsic-tag-with-props?))
+
+(defn- reference-tag-without-props? [x]
+  (->> x
+       str
+       (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*>")))
 
 (s/def ::simple-reference-tag
   (s/and symbol?
-         #(->> %
-               str
-               (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*>"))))
+         reference-tag-without-props?))
+
+(expound/defmsg ::simple-reference-tag
+  "JSX reference tag without props e.g. <Foo>, <foo.Bar> or <foo.bar/Baz>.")
+
+(defn- reference-tag-with-props? [x]
+  (->> x
+       str
+       (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*")))
 
 (s/def ::props-reference-tag
   (s/and symbol?
-         #(->> %
+         reference-tag-with-props?
+         #_#(->> %
                str
                (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*"))))
 
@@ -75,12 +113,18 @@
 
 (s/def ::props-tag-end #{'>})
 
+(def primitive? (complement coll?))
+(s/def ::primitive primitive?)
+(expound/defmsg ::primitive
+  "Any primitive value e.g. 123 or \"foo\".")
+
 (s/def ::form (s/or
-               :primitive (complement coll?)
+               :jsx ::jsx-expression
+               :primitive ::primitive
                :s-expression ::s-expression
                :map ::map
                :coll ::coll
-               :jsx ::jsx-expression))
+               ))
 
 (s/def ::forms (s/* (s/spec ::form)))
 
@@ -104,6 +148,9 @@
          (s/or :props-jsx-expression ::props-jsx-expression
                :simple-jsx-expression ::simple-jsx-expression)))
 
+(expound/defmsg ::jsx-expression
+  "JSX expression e.g. (<foo>), (<Bar> child) or (<baz.Bing :x y > child)")
+
 (defn- tag? [x]
   (and (symbol? x)
        (->> x
@@ -114,7 +161,9 @@
   (and (seq? x)
        (tag? (first x))))
 
-(s/def ::not-tag (complement tag?))
+(def anything-which-is-not-a-tag? (complement tag?))
+(s/def ::not-tag anything-which-is-not-a-tag?)
+(expound/defmsg ::not-tag "Anythig other than a JSX tag.")
 
 (s/def ::non-tag-form (s/and ::not-tag
                              ::form))
@@ -122,16 +171,20 @@
 (s/def ::s-expression (s/and seq?
                              (s/cat :first ::non-tag-form
                                     :rest (s/* ::form))))
+(expound/defmsg ::s-expression
+  "S-expresion e.g. (+ 1 2), (def foo 123) or (foo bar baz).")
 
 (s/def ::map (s/map-of ::form ::form))
 
-(defn- non-jsx-coll? [x]
+(defn- any-collection-which-is-not-a-jsx-expression? [x]
   (and (coll? x)
        (not (map? x))
        (not (jsx? x))))
 
 (s/def ::coll (s/coll-of ::form
-                         :kind non-jsx-coll?))
+                         :kind any-collection-which-is-not-a-jsx-expression?))
+
+(expound/defmsg ::coll "Any collection which is not a JSX expression.")
 
 (s/def ::fn-args (:args (s/get-spec 'clojure.core/fn)))
 

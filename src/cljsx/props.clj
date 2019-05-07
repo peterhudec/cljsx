@@ -41,6 +41,25 @@
        ;; Return nil rather than empty list
        (#(if (empty? %) nil %))))
 
+;; TODO: Finish this
+#_(defn props->mergelist [props]
+  (filter (complement #(and (map? %)
+                            (empty? %)))
+          (let [props' (s/conform ::props props)]
+            (reduce (fn [[current & more :as mergelist] prop']
+                      (let [[k v :as prop] (s/unform ::prop prop')
+                            is-spread (= k '...)
+                            is-true-attr (= (count prop) 1)]
+                        (if is-spread
+                          (concat (list {} v)
+                                  mergelist)
+                          (cons (assoc current
+                                       k
+                                       (if is-true-attr true v))
+                                more))))
+                    [{}]
+                    props'))))
+
 (defn list->props+children [l]
   (let [[x [_ & xs]] (split-with #(not= % '>) l)]
     [x xs]))

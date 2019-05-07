@@ -156,6 +156,8 @@
           {}
           props))
 
+(def js-obj-or-map? map?)
+
 (defn component-impl [interceptor-sym args]
   (let [{:keys [props body] :as conformed} (s/conform ::specs/component-args args)
         fn-name (get-in conformed [:quoted-name :symbol])
@@ -207,35 +209,43 @@
         (cljsx.core/cljify-props props#)
         (cljsx.core/jsify-props props#)))))
 
-(defn- defcomponent* [interceptor-symbol [name & [frst & more :as decls]]]
-  (let [doc (when (string? frst) frst)
-        docmeta (when doc {:doc doc})
-        [props & decls'] (if doc more decls)
-        func `(fn [~props] ~@decls')
-        name-with-meta (with-meta name (merge (meta name) docmeta))]
-    `(defn ~name-with-meta [props#]
+(defn- defcomponent-impl [interceptor-sym args]
+  (let [{:keys [fn-name
+                docstring
+                props
+                body]} (s/conform ::specs/defcomponent-args args)
+        possible-docstring (if docstring [docstring] [])
+        props' (s/unform ::specs/component-props props)
+        body' (s/unform ::specs/fn-body body)
+        func `(fn [~props'] ~@body')]
+    `(defn ~fn-name ~@possible-docstring [props#]
        (clojure.core/assert (cljsx.core/js-obj-or-map? props#))
-       (~func (~interceptor-symbol props#)))))
+       (~func (~interceptor-sym props#)))))
 
 (defmacro defcomponent
   "Same as (def name (component param exprs))"
-  [& more]
-  (defcomponent* 'cljsx.core/cljify-props more))
+  [& args]
+  (defcomponent-impl 'cljsx.core/cljify-props args))
 
 (defmacro defcomponent-js
   "Same as (def name (component-js param exprs))"
-  [& more]
-  (defcomponent* 'cljsx.core/jsify-props more))
+  [& args]
+  (defcomponent-impl 'cljsx.core/jsify-props args))
 
 (defmacro defcomponent+js
   "Same as (def name (component+js param exprs))"
-  [name & [frst & more :as decls]]
-  (let [doc (when (string? frst) frst)
-        docmeta (when doc {:doc doc})
-        [clj-props js-props & decls'] (if doc more decls)
-        func `(fn [~clj-props ~js-props] ~@decls')
-        name-with-meta (with-meta name (merge (meta name) docmeta))]
-    `(defn ~name-with-meta [props#]
+  [& args]
+  (let [{:keys [fn-name
+                docstring
+                clj-props
+                js-props
+                body]} (s/conform ::specs/defcomponent+js-args args)
+        possible-docstring (if docstring [docstring] [])
+        clj-props' (s/unform ::specs/component-props clj-props)
+        js-props' (s/unform ::specs/component-props js-props)
+        body' (s/unform ::specs/fn-body body)
+        func `(fn [~clj-props' ~js-props'] ~@body')]
+    `(defn ~fn-name ~@possible-docstring [props#]
        (clojure.core/assert (cljsx.core/js-obj-or-map? props#))
        (~func
         (cljsx.core/cljify-props props#)
@@ -243,3 +253,4 @@
 
 (defjsx >>> jsx jsx-fragment)
 (defjsx react>>> react/createElement react/Fragment)
+

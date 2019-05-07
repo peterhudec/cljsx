@@ -147,6 +147,17 @@
                                   :js-props ::component-props
                                   :body ::fn-body))
 
+(s/def ::defcomponent-args (s/cat :fn-name simple-symbol?
+                                  :docstring (s/? string?)
+                                  :props ::component-props
+                                  :body ::fn-body))
+
+(s/def ::defcomponent+js-args (s/cat :fn-name simple-symbol?
+                                  :docstring (s/? string?)
+                                  :clj-props ::component-props
+                                  :js-props ::component-props
+                                  :body ::fn-body))
+
 (s/fdef cljsx.core/component
   :args ::component-args
   :ret any?)
@@ -157,5 +168,17 @@
 
 (s/fdef cljsx.core/component+js
   :args ::component+js-args
+  :ret any?)
+
+(s/fdef cljsx.core/defcomponent
+  :args ::defcomponent-args
+  :ret any?)
+
+(s/fdef cljsx.core/defcomponent-js
+  :args ::defcomponent-args
+  :ret any?)
+
+(s/fdef cljsx.core/defcomponent+js
+  :args ::defcomponent+js-args
   :ret any?)
 

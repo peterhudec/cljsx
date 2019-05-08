@@ -28,7 +28,7 @@
       => (js->clj (e "h1" nil "child"))
 
       (js->clj (sut/react>>> (<h1> "child1"
-                                 "child2")))
+                                   "child2")))
       => (js->clj (e "h1" nil "child1" "child2")))
 
 (fact "Props"
@@ -39,9 +39,9 @@
              "child2")))
       => (js->clj
           (e "h1"
-              (clj->js {:className "foo"})
-              "child1"
-              "child2"))
+             (clj->js {:className "foo"})
+             "child1"
+             "child2"))
 
       (js->clj
        (sut/react>>>
@@ -51,10 +51,10 @@
              "child2")))
       => (js->clj
           (e "h1"
-              (clj->js {:className "foo"
-                        :style     {:color "red"}})
-              "child1"
-              "child2"))
+             (clj->js {:className "foo"
+                       :style     {:color "red"}})
+             "child1"
+             "child2"))
 
       (js->clj
        (sut/react>>>
@@ -62,8 +62,8 @@
              :style {:color "red"} >)))
       => (js->clj
           (e "h1"
-              (clj->js {:className "foo"
-                        :style     {:color "red"}}))))
+             (clj->js {:className "foo"
+                       :style     {:color "red"}}))))
 
 (def spread-props-1 {:className "bing"})
 (def spread-props-2 {:title "Have you got a bandage?"
@@ -76,7 +76,7 @@
              ... {:className "bar"} >)))
       => (js->clj
           (e "h1"
-              (clj->js {:className "bar"})))
+             (clj->js {:className "bar"})))
 
       (js->clj
        (sut/react>>>
@@ -85,7 +85,7 @@
              :className "baz" >)))
       => (js->clj
           (e "h1"
-              (clj->js {:className "baz"})))
+             (clj->js {:className "baz"})))
 
       (js->clj
        (sut/react>>>
@@ -95,7 +95,7 @@
              ... spread-props-1 >)))
       => (js->clj
           (e "h1"
-              (clj->js {:className "bing"})))
+             (clj->js {:className "bing"})))
 
       (js->clj
        (sut/react>>>
@@ -105,9 +105,9 @@
              ... spread-props-2 >)))
       => (js->clj
           (e "h1"
-              (clj->js (merge
-                        {:className "baz"}
-                        spread-props-2)))))
+             (clj->js (merge
+                       {:className "baz"}
+                       spread-props-2)))))
 (fact "Nesting"
       (js->clj
        (sut/react>>>
@@ -118,10 +118,10 @@
          "Text")))
       => (js->clj
           (e "div" nil
-              (e "h1" nil "Title")
-              (e "h2" nil "Subtitle")
-              (e "p" nil "Paragraph")
-              "Text"))
+             (e "h1" nil "Title")
+             (e "h2" nil "Subtitle")
+             (e "p" nil "Paragraph")
+             "Text"))
 
       (js->clj
        (sut/react>>>
@@ -130,8 +130,8 @@
                       (<div> "Grand child")))))
       => (js->clj
           (e "div" nil "Parent"
-              (e "div" nil "Child"
-                  (e "div" nil "Grand child")))))
+             (e "div" nil "Child"
+                (e "div" nil "Grand child")))))
 
 (facts "JS Detection"
        (r
@@ -231,7 +231,8 @@
          (f (sut/with-js-args JSComponent))
          => "js"
 
-         ;; Metadata is lost on functions defined in the same JSX block where it is used.
+         ;; A function's metadata is lost if the function is defined
+         ;; in the same JSX block where it is then used.
          (sut/react>>>
           (defn DefnInsideJSX [props]
             (js-or-clj props))
@@ -267,8 +268,8 @@
                      ["a" "b" "c"]))))
              => (r
                  (e "ul" nil
-                     (map #(e "li" (clj->js {:key %}) %)
-                          ["a" "b" "c"]))))
+                    (map #(e "li" (clj->js {:key %}) %)
+                         ["a" "b" "c"]))))
 
        (fact "Escaping of >"
              (let [Component (fn [{:keys [comparator a b]}]
@@ -352,9 +353,8 @@
                      => "clj+js"
 
                      (Component dummy-js-props)
-                     => "clj+js"))
+                     => "clj+js")))
 
-             )
        (fact "Defs"
              (AlwaysCLJProps dummy-clj-props)
              => "clj"
@@ -372,22 +372,20 @@
              => "clj+js"
 
              (AlwaysCLJ+JSProps dummy-js-props)
-             => "clj+js"
-
-             ))
+             => "clj+js"))
 
 (fact "Element props"
       (let [Component (fn [js-props]
                         (e "ul" nil
                            (e "li" nil
-                               (.-a js-props))
+                              (.-a js-props))
                            (e "li" nil
-                               (.-b js-props))))]
+                              (.-b js-props))))]
         (r
          (e Component #js {:a (e "span" nil
-                                   "AAA")
-                            :b (e "span" nil
-                                   "BBB")})))
+                                 "AAA")
+                           :b (e "span" nil
+                                 "BBB")})))
       => (sut/react>>>
           (let [Component (sut/component-js
                            {:keys [a b]}
@@ -398,4 +396,3 @@
              (<Component :a (<span> "AAA")
                          :b (<span> "BBB")
                          >)))))
-

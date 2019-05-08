@@ -81,9 +81,9 @@
      (defn ~macro-name [&form# &env# & forms#]
        (->> forms#
             (w/postwalk #(visit-node (cljs-env? &env#)
-                                          ~(str jsx-name)
-                                          ~(str fragment-name)
-                                          %))
+                                     ~(str jsx-name)
+                                     ~(str fragment-name)
+                                     %))
             wrap-in-do))
      (. (var ~macro-name) (setMacro))
      (var ~macro-name)
@@ -171,7 +171,8 @@
   Both should be a symbol or a destructuring map.
   all the other arguments are the body of the function."
   [& args]
-  (let [{:keys [clj-props js-props body] :as args'} (s/conform ::specs/component+js-args args)
+  (let [args' (s/conform ::specs/component+js-args args)
+        {:keys [clj-props js-props body] :as args'} args'
         fn-name (get-in args' [:quoted-name :symbol])
         possible-fn-name (if fn-name [fn-name] [])
         clj-props' (s/unform ::specs/component-props clj-props)
@@ -228,4 +229,3 @@
 
 (defjsx >>> jsx jsx-fragment)
 (defjsx react>>> react/createElement react/Fragment)
-

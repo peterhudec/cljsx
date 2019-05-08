@@ -125,12 +125,12 @@
 (s/def ::forms (s/* (s/spec ::form)))
 
 (s/def ::simple-jsx (s/cat :tag ::simple-tag
-                                      :children ::forms))
+                           :children ::forms))
 
 (s/def ::props-jsx (s/cat :tag ::props-tag
-                                     :props ::props
-                                     :tag-end ::props-tag-end
-                                     :children ::forms))
+                          :props ::props
+                          :tag-end ::props-tag-end
+                          :children ::forms))
 
 (s/def ::jsx
   ;; We need to check for seq?, otherwise vectors would match as
@@ -178,7 +178,7 @@
 
 (s/def ::fn-args (:args (s/get-spec 'clojure.core/fn)))
 
-;; https://github.com/clojure/core.specs.alpha/blob/master/src/main/clojure/clojure/core/specs/alpha.clj
+;; Taken from clojure.core.specs.alpha
 (s/def ::fn-body (s/alt :prepost+body (s/cat :prepost map?
                                              :body (s/+ any?))
                         :body (s/* any?)))
@@ -232,4 +232,3 @@
 (s/fdef cljsx.core/defcomponent+js
   :args ::defcomponent+js-args
   :ret any?)
-

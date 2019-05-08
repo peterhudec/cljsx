@@ -15,8 +15,15 @@
     "shadow-cljs": "^2.8.25"
   },
   "scripts": {
-    "test": "rm -rf .shadow-cljs && lein midje && shadow-cljs compile node-test && node target/public/node-test.js",
-    "watch-test": "shadow-cljs watch node-test-dev"
+    "start": "shadow-cljs watch example",
+    "lint": "lein lint",
+    "clj-test": "lein clj-test",
+    "cljs-test": "rm -rf .shadow-cljs && shadow-cljs compile node-test && node target/public/node-test.js",
+    "test": "npm run clj-test && npm run cljs-test",
+    "check": "npm test && npm run lint",
+    "cljs-test:watch": "shadow-cljs watch node-test-dev",
+    "fig:build": "lein fig:build",
+    "fig": "lein fig"
   },
   "repository": {
     "type": "git",

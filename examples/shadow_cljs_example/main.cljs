@@ -22,8 +22,8 @@
  (defcomponent ButtonList {:keys [children]}
    (<ul>
     (map #(<li :key % >
-           (<Button :title %
-                    :disabled (= % "Bar") > %))
+               (<Button :title %
+                        :disabled (= % "Bar") > %))
          children)))
 
  (defn Content []

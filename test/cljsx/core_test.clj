@@ -2,7 +2,7 @@
   (:require [midje.sweet :refer [fact facts throws]]
             [cljsx.core :as sut]))
 
-(fact
+#_(fact
  "sut/list->tag+props+children"
  (sut/list->tag+props+children
   '(<> foo bar))

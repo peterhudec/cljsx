@@ -2,76 +2,74 @@
   (:require
    [clojure.spec.alpha :as s]
    [clojure.walk :as w]
-   [cljsx.tag :as tag]
-   [cljsx.props :as props]
    [cljsx.specs :as specs]))
 
-(defn list->tag+props+children [[x & xs]]
-  (let [str-tag (str x)]
-    (if (tag/fragment? str-tag)
-      (list '<> nil xs)
-      (if-let [tag (tag/props? str-tag)]
-        (let [[props
-               children] (props/list->props+children xs)]
-          (list
-           tag
-           (props/props->mergelist props)
-           children))
-        (if-let [tag (tag/simple? str-tag)]
-          (list tag nil xs))))))
+(defn- normalize-tag [sym]
+  (->> sym
+       str
+       (re-matches #"<(.*?)>?")
+       second))
 
-(defn cljs-env? [&env]
-  (let [ns (:ns &env)
-        a (:js-globals &env)
-        b (:js-aliases ns)
-        c (:cljs.analyzer/constants ns)]
-    (boolean (or a b c))))
-
-(defn function-call? [args]
-  (and (seq? args)
-       (symbol? (first args))))
-
-(defn visit-function-call [cljs-env jsx-name fragment-name args]
-  (if-let [[tag proplist children] (list->tag+props+children args)]
-    (let [jsx-symbol (symbol jsx-name)
-          resolved-tag (if (= tag '<>)
-                         (symbol fragment-name)
-                         (tag/resolve-tag tag))
-          proplist (if (< 1 (count proplist))
-                            `(merge ~@proplist)
-                            (first proplist))]
-      ;; This is the (jsx tag props children) call:
-      `(~jsx-symbol
-
-        ;; Tag
-        ~(if cljs-env
-           `(let [resolved-tag# ~resolved-tag]
-              (if (cljsx.core/js? ~resolved-tag)
-                resolved-tag#
-                (fn [props#]
-                  ;; If we try to do (~resolved-tag ...),
-                  ;; compilation fails, but it works with let binding.
-                  (resolved-tag# (cljs.core/js->clj
-                                  props#
-                                  :keywordize-keys true)))))
-           resolved-tag)
-
-        ;; Props
-        ~(if cljs-env
-           `(cljs.core/clj->js ~proplist)
-           proplist)
-
-        ;; Children
-        ~@children))
-    args))
+(defn- conformed-props->mergelist [props]
+  (->> props
+       (reduce (fn [[mergelist pmap] prop']
+                 (let [[k v :as prop] (s/unform ::specs/prop prop')
+                       is-spread (= k '...)
+                       is-true-attr (= (count prop) 1)]
+                   (if is-spread
+                     [(if (empty? pmap)
+                        (conj mergelist v)
+                        (conj mergelist pmap v)) {}]
+                     [mergelist (assoc pmap k (if is-true-attr
+                                                true
+                                                v))])))
+               [[] {}])
+       ;; Flatten the reduced structure
+       ((fn [[mergelist pmap]]
+          (if (empty? pmap)
+            mergelist
+            (conj mergelist pmap))))
+       ;; Remove empty maps
+       (filter #(not (and (map? %) (empty? %))))
+       ;; Return nil, if the mergelist is empty
+       (#(when-not (empty? %) %))))
 
 (defn visit-node [cljs-env jsx-name fragment-name node]
-  (if (function-call? node)
-    (visit-function-call cljs-env
-                         jsx-name
-                         fragment-name
-                         node)
-    node))
+  (let [node' (s/conform ::specs/jsx node)]
+    (if (= node' ::s/invalid)
+      node
+      (let [jsx-symbol (symbol jsx-name)
+            fragment-symbol (symbol fragment-name)
+            [jsx-type {:keys [tag props children]}] node'
+            [tag-type dirty-tag] tag
+            prop-mergelist (conformed-props->mergelist props)
+            props (if (< 1 (count prop-mergelist))
+                    `(merge ~@prop-mergelist)
+                    (first prop-mergelist))
+            unformed-children (s/unform ::specs/forms children)
+            resolved-tag (case tag-type
+                           :fragment-tag (symbol fragment-name)
+                           :intrinsic-tag (normalize-tag dirty-tag)
+                           :reference-tag (-> dirty-tag
+                                              normalize-tag
+                                              symbol))
+            intercepted-tag `(let [resolved-tag# ~resolved-tag]
+                               (if (cljsx.core/js? ~resolved-tag)
+                                 resolved-tag#
+                                 (fn [props#]
+                                   ;; If we try to do (~resolved-tag ...),
+                                   ;; compilation fails,
+                                   ;; but it works with let binding.
+                                   (resolved-tag# (cljs.core/js->clj
+                                                   props#
+                                                   :keywordize-keys true)))))
+            env-aware-tag (if cljs-env
+                            intercepted-tag
+                            resolved-tag)
+            env-aware-props (if (and props cljs-env)
+                              `(cljs.core/clj->js ~props)
+                              props)]
+        `(~jsx-symbol ~env-aware-tag ~env-aware-props ~@unformed-children)))))
 
 (defn wrap-in-do [[x & more :as args]]
   (if (empty? more)
@@ -83,9 +81,9 @@
      (defn ~macro-name [&form# &env# & forms#]
        (->> forms#
             (w/postwalk #(visit-node (cljs-env? &env#)
-                                     ~(str jsx-name)
-                                     ~(str fragment-name)
-                                     %))
+                                          ~(str jsx-name)
+                                          ~(str fragment-name)
+                                          %))
             wrap-in-do))
      (. (var ~macro-name) (setMacro))
      (var ~macro-name)
@@ -93,17 +91,12 @@
        :args :cljsx.specs/forms
        :ret any?)))
 
-(defn fnjs* [fn-args]
-  `(fn [& more#]
-     (apply (fn ~@fn-args)
-            (map #(cljs.core/js->clj % :keywordize-keys true)
-                 more#))))
-
-(defmacro fnjs [& fn-args]
-  (fnjs* fn-args))
-
-(defmacro defnjs [name' & defn-args]
-  `(def ~name' ~(fnjs* defn-args)))
+(defn cljs-env? [&env]
+  (let [ns (:ns &env)
+        a (:js-globals &env)
+        b (:js-aliases ns)
+        c (:cljs.analyzer/constants ns)]
+    (boolean (or a b c))))
 
 (defmacro js?
   "Checks whether `x` is a JavaScript value.

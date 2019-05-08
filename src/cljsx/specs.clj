@@ -32,7 +32,7 @@
 
 (s/def ::spread-val (s/or :reference ::spread-reference
                           :map ::map
-                          :jsx ::jsx-expression
+                          :jsx ::jsx
                           :s-expression ::s-expression
                           :even-vector ::even-vector))
 
@@ -92,10 +92,7 @@
 
 (s/def ::props-reference-tag
   (s/and symbol?
-         reference-tag-with-props?
-         #_#(->> %
-                 str
-                 (re-matches #"<([\w.-]+/)?([\w]+\.)*[A-Z][><:+&'*\-\w]*"))))
+         reference-tag-with-props?))
 
 (s/def ::simple-tag (s/alt :fragment-tag ::fragment
                            :intrinsic-tag ::simple-intrinsic-tag
@@ -119,7 +116,7 @@
   "Any primitive value e.g. 123 or \"foo\".")
 
 (s/def ::form (s/or
-               :jsx ::jsx-expression
+               :jsx ::jsx
                :primitive ::primitive
                :s-expression ::s-expression
                :map ::map
@@ -127,22 +124,22 @@
 
 (s/def ::forms (s/* (s/spec ::form)))
 
-(s/def ::simple-jsx-expression (s/cat :tag ::simple-tag
+(s/def ::simple-jsx (s/cat :tag ::simple-tag
                                       :children ::forms))
 
-(s/def ::props-jsx-expression (s/cat :tag-start ::props-tag
+(s/def ::props-jsx (s/cat :tag ::props-tag
                                      :props ::props
                                      :tag-end ::props-tag-end
                                      :children ::forms))
 
-(s/def ::jsx-expression
+(s/def ::jsx
   ;; We need to check for seq?, otherwise vectors would match as
   ;; expressions e.g [<foo> bar] would be a valid JSX expression.
   (s/and seq?
          ;; Props expression is first so that its errors show up first
-         (s/or :props-jsx-expression ::props-jsx-expression
-               :simple-jsx-expression ::simple-jsx-expression)))
-(expound/defmsg ::jsx-expression
+         (s/or :props-jsx-expression ::props-jsx
+               :simple-jsx-expression ::simple-jsx)))
+(expound/defmsg ::jsx
   "JSX expression e.g. (<foo>), (<Bar> child) or (<baz.Bing :x y > child)")
 
 (defn- tag? [x]
@@ -168,7 +165,7 @@
 (expound/defmsg ::s-expression
   "S-expresion e.g. (+ 1 2), (def foo 123) or (foo bar baz).")
 
-(s/def ::map (s/map-of ::form ::form))
+(s/def ::map (s/map-of ::form ::form :conform-keys true))
 
 (defn- any-collection-which-is-not-a-jsx-expression? [x]
   (and (coll? x)

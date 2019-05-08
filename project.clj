@@ -1,5 +1,12 @@
 (defproject cljsx "0.0.1-SNAPSHOT"
-  :description "Cool new project to do things and stuff"
+  :description "JSX for Clojure and ClojureScript"
+  :url "https://github.com/peterhudec/cljsx"
+  :license {:author "Peter Hudec"
+            :email "peterhudec@peterhudec.com"
+            :year 2019
+            :key "mit"
+            :name "The MIT License (MIT)"
+            :url "http://opensource.org/licenses/MIT"}
   :source-paths ["src" "test" "examples"]
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.520"]]

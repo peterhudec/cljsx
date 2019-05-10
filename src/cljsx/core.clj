@@ -68,8 +68,13 @@
                             resolved-tag)
             env-aware-props (if (and props cljs-env)
                               `(cljs.core/clj->js ~props)
-                              props)]
-        `(~jsx-symbol ~env-aware-tag ~env-aware-props ~@unformed-children)))))
+                              props)
+            env-aware-children (if cljs-env
+                                 (map (fn [child]
+                                        `(cljs.core/clj->js ~child))
+                                      unformed-children)
+                                 unformed-children)]
+        `(~jsx-symbol ~env-aware-tag ~env-aware-props ~@env-aware-children)))))
 
 (defn wrap-in-do [[x & more :as args]]
   (if (empty? more)

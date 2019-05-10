@@ -145,14 +145,4 @@
          ["a" "b" "c"])))
  => '({:tag "FOO", :props {:prop "a"}, :children ["a"]}
       {:tag "FOO", :props {:prop "b"}, :children ["b"]}
-      {:tag "FOO", :props {:prop "c"}, :children ["c"]})
-
- (macroexpand
-  '(my>
-    (<foo> "foo")
-    (<bar> "bar")
-    (<baz> "baz")))
- =>
- '(do (my-jsx "foo" nil "foo")
-      (my-jsx "bar" nil "bar")
-      (my-jsx "baz" nil "baz")))
+      {:tag "FOO", :props {:prop "c"}, :children ["c"]}))

@@ -76,25 +76,41 @@
                                  unformed-children)]
         `(~jsx-symbol ~env-aware-tag ~env-aware-props ~@env-aware-children)))))
 
-(defn wrap-in-do [[x & more :as args]]
-  (if (empty? more)
-    x
-    `(do ~@args)))
+(defn check-pragma* [label macro-name sym]
+  `(if-not (cljsx.core/defined? ~(symbol sym))
+     (throw (error (str "The " ~label " pragma `" ~sym
+                        "` required by the cljsx `" ~macro-name
+                        "` macro is not defined!")))))
 
-(defmacro defjsx [macro-name jsx-name fragment-name]
+(defn check-pragmas* [macro-name jsx-name fragment-name args]
   `(do
-     (defn ~macro-name [&form# &env# & forms#]
-       (->> forms#
-            (w/postwalk #(visit-node (cljs-env? &env#)
-                                     ~(str jsx-name)
-                                     ~(str fragment-name)
-                                     %))
-            wrap-in-do))
-     (. (var ~macro-name) (setMacro))
-     (var ~macro-name)
-     (s/fdef ~macro-name
-       :args :cljsx.specs/forms
-       :ret any?)))
+     ~(check-pragma* "JSX" macro-name jsx-name)
+     ~(check-pragma* "fragment" macro-name fragment-name)
+     ~@args))
+
+(defmacro defjsx [macro-sym jsx-sym fragment-sym]
+  (let [macro-name (str macro-sym)
+        jsx-name (str jsx-sym)
+        fragment-name (str fragment-sym)]
+    `(do
+       (defn ~macro-sym [&form# &env# & forms#]
+         (->> forms#
+              (w/postwalk #(visit-node (cljs-env? &env#)
+                                       ~jsx-name
+                                       ~fragment-name
+                                       %))
+              (check-pragmas* ~macro-name ~jsx-name ~fragment-name)))
+       (. (var ~macro-sym) (setMacro))
+       (var ~macro-sym)
+       (s/fdef ~macro-sym
+         :args :cljsx.specs/forms
+         :ret any?))))
+
+;;; JS conversion related stuff
+
+(def jsify-props identity)
+(def cljify-props identity)
+(def js-obj-or-map? map?)
 
 (defn cljs-env? [&env]
   (let [ns (:ns &env)
@@ -102,6 +118,18 @@
         b (:js-aliases ns)
         c (:cljs.analyzer/constants ns)]
     (boolean (or a b c))))
+
+(defmacro defined? [s]
+  (or
+   (boolean (resolve s))
+   (contains? &env s)
+   (contains? (:locals &env) s)
+   (contains? (get-in &env [:ns :defs]) s)))
+
+(defmacro error [msg]
+  (if (cljs-env? &env)
+    `(js/Error. ~msg)
+    `(Exception. ~msg)))
 
 (defmacro js?
   "Checks whether `x` is a JavaScript value.
@@ -133,10 +161,6 @@
         ;; If tag is anything except for the above,
         ;; it's a CLJ value.
         false))))
-
-(def jsify-props identity)
-(def cljify-props identity)
-(def js-obj-or-map? map?)
 
 (defn component-impl [interceptor-sym args]
   (let [{:keys [props body] :as args'} (s/conform ::specs/component-args args)

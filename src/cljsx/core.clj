@@ -233,4 +233,5 @@
         (cljsx.core/jsify-props props#)))))
 
 (defjsx >>> jsx jsx-fragment)
+(defjsx inferno>>> inferno-create-element/createElement inferno/Fragment)
 (defjsx react>>> react/createElement react/Fragment)

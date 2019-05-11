@@ -232,6 +232,9 @@
         (cljsx.core/cljify-props props#)
         (cljsx.core/jsify-props props#)))))
 
+;; TODO: Should these be createElement and Fragment?
 (defjsx >>> jsx jsx-fragment)
 (defjsx inferno>>> inferno-create-element/createElement inferno/Fragment)
 (defjsx react>>> react/createElement react/Fragment)
+;; Snabdom doesn't seem to support fragment
+(defjsx snabbdom>>> snabbdom-pragma/createElement Fragment)

@@ -19,7 +19,8 @@
             :asset-path "/shadow-cljs-out"
             :modules {:main {:entries [shadow-cljs-example.main]}}}
   :node-test {:target :node-test
-              :output-to "target/public/node-test.js"}
+              :output-to "target/public/node-test.js"
+              :cache-level :off}
   :node-test-dev {:target :node-test
                   :output-to "target/public/node-test.js"
                   :autorun true}}}

@@ -20,26 +20,26 @@
             "lint"
             ["do" "cljfmt" "check," "bikeshed," "eastwood"]
 
-            "clj-test"
+            "test:clj"
             ["midje"]
 
-            "cljs-test"
-            ["shell" "npm" "run" "cljs-test"]
+            "test:cljs"
+            ["shell" "npm" "run" "test:cljs"]
 
-            "cljs-test:watch"
-            ["shell" "npm" "run" "cljs-test:watch"]
+            "test:watch"
+            ["shell" "npm" "run" "test:watch"]
 
-            "cljs-example:watch"
+            "example:watch"
             ["shell" "npm" "start"]
 
             "test"
-            ["do" "clj-test," "cljs-test"]
+            ["do" "test:clj," "test:cljs"]
 
             "check"
             ["do" "test," "lint"]
 
             "travis"
-            ["do" "clj-test," "lint"]}
+            ["do" "test:clj," "lint"]}
   :profiles {:dev {:resource-paths ["target"]
                    :clean-targets ^{:protect false} ["target"]
                    :plugins [[lein-cljfmt "0.6.4"]

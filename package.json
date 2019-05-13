@@ -4,21 +4,24 @@
   "description": "JSX for Clojure and ClojureScript",
   "devDependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
-    "shadow-cljs": "^2.8.25",
+    "npm-run-all": "^4.1.5",
     "react": "^16.8.6",
-    "react-dom": "^16.8.6"
+    "react-dom": "^16.8.6",
+    "shadow-cljs": "^2.8.25"
   },
   "scripts": {
-    "start": "shadow-cljs watch example",
-    "lint": "lein lint",
-    "clj-test": "lein clj-test",
-    "cljs-test": "rm -rf .shadow-cljs && shadow-cljs compile node-test && node target/public/node-test.js",
-    "test": "npm run clj-test && npm run cljs-test",
-    "check": "npm test && npm run lint",
-    "cljs-test:watch": "shadow-cljs watch node-test-dev",
+    "check": "run-p test lint",
     "fig:build": "lein fig:build",
     "fig": "lein fig",
-    "travis": "shadow-cljs compile node-test && node target/public/node-test.js"
+    "lint": "lein lint",
+    "start": "shadow-cljs watch example",
+    "test:compile": "shadow-cljs compile node-test",
+    "test:run": "node target/public/node-test.js",
+    "test:clj": "lein test:clj",
+    "test:cljs": "run-s test:compile test:run",
+    "test:watch": "shadow-cljs watch node-test-dev",
+    "test": "run-p clj-test cljs-test",
+    "travis": "npm run test:cljs"
   },
   "repository": {
     "type": "git",

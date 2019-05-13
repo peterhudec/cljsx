@@ -233,7 +233,7 @@
         (cljsx.core/jsify-props props#)))))
 
 ;; TODO: Should these be createElement and Fragment?
-(defjsx >>> jsx jsx-fragment)
+(defjsx >>> createElement Fragment)
 (defjsx inferno>>> inferno-create-element/createElement inferno/Fragment)
 (defjsx react>>> react/createElement react/Fragment)
 

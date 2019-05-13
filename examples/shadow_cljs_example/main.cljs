@@ -1,53 +1,53 @@
 (ns shadow-cljs-example.main
   (:require ["react" :as react]
-            ["react-dom" :as react-dom]
-            [cljsx.core :refer [react>>> defcomponent component component+js]]))
-
-(def common-props {:style {:color "olive"
-                           :background "honeydew"
-                           :borderRadius "0.2em"
-                           :padding "0.4em"}})
+            ["react-dom" :refer [render]]
+            ["react-router-dom" :as rr]
+            ["@material-ui/core" :as m]
+            ["@material-ui/icons" :as i]
+            [cljsx.core :refer [react>>> defcomponent]]))
 
 (react>>>
- (defcomponent Button {:keys [title children] :as props}
-   (<button ... common-props
-            ... props
-            :onClick #(js/alert title) >
-            children))
 
- (defn Header []
-   (<h1 ... common-props >
-        "Hello CLJSX!"))
+ (defn Card []
+   (<m/Card>
+    (<m/CardHeader :avatar (<m/Avatar>
+                            (<i/Face>))
+                   :action (<m/IconButton>
+                            (<i/MoreVert>))
+                   :title "Andy & Lou"
+                   :subheader "Have you got a bandage?"
+                   >)
+    (<m/CardMedia :title "Andy & Lou"
+                  :style {:paddingTop "50%"}
+                  :image "https://bit.ly/2JhbEFN"
+                  >)
+    (<m/CardContent>
+     (<m/Typography :component "p" >
+                    "Lorem ipsum dolor sit amet"))
+    (<m/CardActions>)))
 
- (defcomponent ButtonList {:keys [children]}
-   (<ul>
-    (map #(<li :key % >
-               (<Button :title %
-                        :disabled (= % "Bar") > %))
-         children)))
+ (defcomponent RoutedTab props
+   (<m/Tab ... props
+           :component rr/Link
+           >))
 
- (defn Content []
-   (<>
-    (<p ... common-props >
-        "Lorem ipsum dolor sit amet")
-    (<ButtonList> "Foo"
-                  "Bar"
-                  "Baz")))
-
- (defn Footer []
-   (<h2 ... common-props >
-        "Enjoy!"))
-
- (defcomponent App _
-   (<div :style {:border "3px dashed olive"
-                 :padding "2rem"
-                 :borderRadius "1rem"
-                 :maxWidth "400px"
-                 :margin "2rem auto"} >
-         (<Header>)
-         (<Content>)
-         (<Footer>)))
-
- (react-dom/render
-  (<App>)
+ (render
+  (<rr/BrowserRouter>
+   (<div>
+    (<rr/Route>
+     (fn [router-props]
+       (<m/Tabs :centered
+                :value (-> router-props
+                           .-location
+                           .-pathname
+                           (subs 1))
+                :indicatorColor "primary"
+                :textColor "primary"
+                >
+                (map #(<RoutedTab :key %
+                                  :label %
+                                  :value %
+                                  :to %
+                                  >)
+                     ["foo" "bar" "baz"]))))))
   (js/document.querySelector "#mount-point")))

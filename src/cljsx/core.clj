@@ -236,5 +236,7 @@
 (defjsx >>> jsx jsx-fragment)
 (defjsx inferno>>> inferno-create-element/createElement inferno/Fragment)
 (defjsx react>>> react/createElement react/Fragment)
-;; Snabdom doesn't seem to support fragment
+
+;; These don't have fragment support
 (defjsx snabbdom>>> snabbdom-pragma/createElement Fragment)
+(defjsx nervjs>>> nervjs/createElement Fragment)

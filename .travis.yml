@@ -3,3 +3,4 @@ matrix:
     - language: clojure
       script: lein travis 
     - language: node_js
+      script: npm run travis

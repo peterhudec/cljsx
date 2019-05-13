@@ -17,7 +17,8 @@
     "check": "npm test && npm run lint",
     "cljs-test:watch": "shadow-cljs watch node-test-dev",
     "fig:build": "lein fig:build",
-    "fig": "lein fig"
+    "fig": "lein fig",
+    "travis": "npm run cljs-test"
   },
   "repository": {
     "type": "git",

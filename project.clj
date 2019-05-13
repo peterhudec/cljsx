@@ -9,7 +9,8 @@
             :url "http://opensource.org/licenses/MIT"}
   :source-paths ["src" "test" "examples"]
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/clojurescript "1.10.520"]]
+                 [org.clojure/clojurescript "1.10.520"]
+                 [expound "0.7.2"]]
   :aliases {"fig"
             ["trampoline" "run" "-m" "figwheel.main"]
 
@@ -46,6 +47,7 @@
                              [lein-shell "0.5.0"]
                              [jonase/eastwood "0.3.5"]]
                    :dependencies [[midje "1.9.8"]
+                                  [lein-midje "3.2.1"]
                                   ;; If we don't explicitly require tools.reader
                                   ;; we get the "reader-error does not exist"
                                   ;; error.
@@ -53,7 +55,6 @@
                                   [org.clojure/tools.reader "1.2.2"]
                                   [com.bhauman/figwheel-main "0.2.0"]
                                   [com.bhauman/rebel-readline-cljs "0.1.4"]
-                                  [expound "0.7.2"]
                                   [cljsjs/react "16.8.3-0"]
                                   [cljsjs/react-dom "16.8.3-0"]]}
              :midje {}})

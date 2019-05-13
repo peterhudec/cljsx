@@ -1,6 +1,6 @@
 matrix:
   include:
     - language: clojure
-      script: lein travis 
+      script: lein midje
     - language: node_js
       script: npm run travis

@@ -18,7 +18,7 @@
     "cljs-test:watch": "shadow-cljs watch node-test-dev",
     "fig:build": "lein fig:build",
     "fig": "lein fig",
-    "travis": "npm run cljs-test"
+    "travis": "shadow-cljs compile node-test && node target/public/node-test.js"
   },
   "repository": {
     "type": "git",

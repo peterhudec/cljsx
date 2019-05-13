@@ -44,10 +44,10 @@
                    :clean-targets ^{:protect false} ["target"]
                    :plugins [[lein-cljfmt "0.6.4"]
                              [lein-bikeshed "0.5.2"]
+                             [lein-midje "3.2.1"]
                              [lein-shell "0.5.0"]
                              [jonase/eastwood "0.3.5"]]
                    :dependencies [[midje "1.9.8"]
-                                  [lein-midje "3.2.1"]
                                   ;; If we don't explicitly require tools.reader
                                   ;; we get the "reader-error does not exist"
                                   ;; error.

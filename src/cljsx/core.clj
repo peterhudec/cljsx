@@ -240,3 +240,4 @@
 ;; These don't have fragment support
 (defjsx snabbdom>>> snabbdom-pragma/createElement Fragment)
 (defjsx nervjs>>> nervjs/createElement Fragment)
+(defjsx preact>>> preact/h Fragment)

@@ -35,7 +35,10 @@
             ["do" "clj-test," "cljs-test"]
 
             "check"
-            ["do" "test," "lint"]}
+            ["do" "test," "lint"]
+
+            "travis"
+            ["do" "clj-test," "lint"]}
   :profiles {:dev {:resource-paths ["target"]
                    :clean-targets ^{:protect false} ["target"]
                    :plugins [[lein-cljfmt "0.6.4"]

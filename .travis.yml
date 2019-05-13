@@ -1,0 +1,5 @@
+matrix:
+  include:
+    - language: clojure
+      script: lein travis 
+    - language: node_js

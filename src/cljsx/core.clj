@@ -1,6 +1,7 @@
 (ns cljsx.core
   (:require
    [clojure.spec.alpha :as s]
+   [clojure.core.specs.alpha :as cs]
    [clojure.walk :as w]
    [cljsx.specs :as specs]))
 
@@ -231,6 +232,24 @@
        (~func
         (cljsx.core/cljify-props props#)
         (cljsx.core/jsify-props props#)))))
+
+(defmacro fn-clj [& fn-args]
+  (let [func `(fn ~@fn-args)]
+    `(fn [& args#]
+       (apply ~func (cljs.core/js->clj args# :keywordize-keys true)))))
+
+(defmacro defn-clj
+  [& defn-args]
+  (let [{:keys [fn-name
+                docstring
+                params
+                body]} (s/conform ::specs/defn-clj-args defn-args)
+        possible-docstring (if docstring [docstring] [])
+        params' (s/unform ::cs/param-list params)
+        body' (s/unform ::specs/fn-body body)
+        func `(fn [~@params'] ~@body')]
+    `(defn ~fn-name ~@possible-docstring [& args#]
+       (apply ~func (cljs.core/js->clj args# :keywordize-keys true)))))
 
 ;; TODO: Should these be createElement and Fragment?
 (defjsx >>> createElement Fragment)

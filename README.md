@@ -1,28 +1,29 @@
-# `cljsx` A.K.A. JSX for Clojure and ClojureScript
+# `cljsx` A.K.A. [JSX] for Clojure and ClojureScript
 
-`cljsx` tries to make it easy to use plain, unwrapped [react] (or any other virtual
-dom) and all the related JavaScript libraries in ClojureScript by mimicking the
-syntax of JSX. It's mainly meant to be used with the amazing [shadow-cljs] with
-its effortless usage of plain NPM packages, but it works just as well with
-[figwheel] and Clojure. 
+`cljsx` tries to make it easy to use plain, unwrapped [React] (or any other
+virtual dom) and all the related JavaScript libraries in ClojureScript by
+mimicking the syntax of [JSX]. It's mainly meant to be used with the amazing
+[shadow-cljs] with its effortless usage of plain NPM packages, but it works just
+as well with [Figwheel] and Clojure. 
 
-If you think about it, JSX is just a _reader macro_, which merely adds syntactic
-sugar to JavaScript. Surprisingly, in Clojure, the language of macros, there's
-no such thing as JSX. Instead there are all sorts of [react] wrappers and wrappers
-of [react] libraries. The most idiomatic way to express [react] DOM trees in Clojure 
-seems to be the _hiccups_ format of nested vectors.
+If you think about it, [JSX] is just a _reader macro_, which merely adds
+syntactic sugar to JavaScript. Surprisingly, in Clojure, the language of macros,
+there's no such thing as [JSX]. Instead there are all sorts of [React] wrappers
+and wrappers of [React] libraries. The most idiomatic way to express [React] DOM
+trees in Clojure seems to be the [_hiccup_](https://github.com/teropa/hiccups)
+format of nested vectors.
 
 `cljsx` is trying to fill this gap with the `cljsx/jsx>` macro, which is the 
 main workhorse it provides, apart from a bunch of additional macros all related
 to simplifying conversion between Clojure and JavaScript. It's main goal is
-expressiveness, readability and familiarity with [react] idioms. `cljsx` is not
-tied to [react] in any way and it works with any other JSX compatible virtual dom
-library like [inferno], [nerv], [preact] or [snabbdom]. 
+expressiveness, readability and familiarity with [React] idioms. `cljsx` is not
+tied to [React] in any way and it works with any other [JSX] compatible virtual
+dom library like [Inferno], [Nerv], [Preact] or [Snabbdom]. 
 
 ## TL;DR
 
-Consider this simple React application which uses [material-ui] and
-[react-router].
+Consider this simple React application which uses [Material-UI] and
+[React Router].
 
 ```jsx
 import React from 'react'
@@ -122,7 +123,7 @@ namespaces.
 ```
 
 And this is how it looks like expressed with [reagent]. Notice the ubiquitous
-conversion from and to [react] with `:>` and `r/as-element` respectively.
+conversion from and to [React] with `:>` and `r/as-element` respectively.
 The extension of the `mui/IconButton` to `icon-button-link` must be hard to
 swallow for someone comming from the JavaScript world.
 
@@ -171,3 +172,14 @@ swallow for someone comming from the JavaScript world.
  [app]
  (js/document.querySelector "#mount-point"))
 ```
+
+[Figwheel]: https://figwheel.org/
+[Inferno]: https://infernojs.org/
+[JSX]: https://reactjs.org/docs/introducing-jsx.html
+[Material-UI]: https://material-ui.com/
+[Nerv]: https://nerv.aotu.io/
+[Preact]: https://preactjs.com/
+[React]: https://reactjs.org/
+[React Router]: https://reacttraining.com/react-router/
+[shadow-cljs]: http://shadow-cljs.org/
+[Snabbdom]: https://github.com/snabbdom/snabbdom

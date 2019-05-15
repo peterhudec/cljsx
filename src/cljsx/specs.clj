@@ -176,12 +176,25 @@
 (expound/defmsg ::coll
   "Any collection which is not a JSX expression e.g. (a b c) or #{a b c}")
 
+;;; Specs for JS conversion macros
+
 (s/def ::fn-args (:args (s/get-spec 'clojure.core/fn)))
 
 ;; Taken from clojure.core.specs.alpha
 (s/def ::fn-body (s/alt :prepost+body (s/cat :prepost map?
                                              :body (s/+ any?))
                         :body (s/* any?)))
+
+(s/def ::fn-clj-args
+  (s/cat :fn-name (s/? simple-symbol?)
+         :fn-tail ::cs/params+body))
+
+(s/def ::defn-clj-args
+  (s/cat :fn-name simple-symbol?
+         :docstring (s/? string?)
+         :meta (s/? map?)
+         :params ::cs/param-list
+         :body ::fn-body))
 
 (s/def ::component-name (s/spec (s/cat :quote #{'quote}
                                        :symbol simple-symbol?)))
@@ -231,4 +244,12 @@
 
 (s/fdef cljsx.core/defcomponent+js
   :args ::defcomponent+js-args
+  :ret any?)
+
+(s/fdef cljsx.core/fn-clj
+  :args ::fn-clj-args
+  :ret any?)
+
+(s/fdef cljsx.core/defn-clj
+  :args ::defn-clj-args
   :ret any?)

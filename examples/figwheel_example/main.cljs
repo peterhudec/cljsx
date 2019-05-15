@@ -1,14 +1,14 @@
 (ns figwheel-example.main
   (:require [react :as react]
             [react-dom :as react-dom]
-            [cljsx.core :refer [react>>> defcomponent component]]))
+            [cljsx.core :refer [react> defcomponent]]))
 
 (def common-props {:style {:color "purple"
                            :background "lavenderblush"
                            :borderRadius "0.2em"
                            :padding "0.4em"}})
 
-(react>>>
+(react>
  (defcomponent Button {:keys [title children] :as props}
    (<button ... common-props
             ... props

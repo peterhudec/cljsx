@@ -1,134 +1,116 @@
 # CLJSX A.K.A. JSX for Clojure and ClojureScript
 
-CLJSX is just a macro which tries to bring the syntax and idioms of JSX to 
-Clojure and ClojureScript.
+CLJSX tries to make it easy to use plain, unwrapped React (or any other virtual
+dom) and all the related libraries in ClojureScript by mimicking the syntax of
+JSX.
 
-Consider this JavaScript code:
+If you think about it, JSX is just a _reader macro_, which merely adds syntactic
+sugar to JavaScript. Surprisingly, in Clojure, the language of macros, there's
+no such thing as JSX. The most idiomatic way to express React DOM trees in
+Clojure is the _hiccups_ format of nested vectors.
+
+CLJSX is trying to fill this gap with the `cljsx/jsx>` macro, which is the main
+workhorse it provides, apart from some additional macros all simplifying
+conversion between Clojure and JavaScript.
+
+## TL;DR
+
+Consider this simple React application which uses [material-ui] and
+[react-router].
 
 ```jsx
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter, Link, Route } from 'react-router-dom'
-import { Paper, Tab, Tabs } from '@material-ui/core'
+import { Avatar, Card, CardContent, CardHeader, IconButton } from '@material-ui/core'
+import * as icons from '@material-ui/icons'
 
-const RoutedTab = props =>
-  <Tab {...props} component={Link} />
-
-const RoutedTabPanel = ({items, ...props}) =>
-  <Route>
-    {({location: {pathname: path}}) => {
-      const activePath = path.slice(1)
-      const activeContent = items[activePath]
-      return (
-        <Paper>
-          <Tabs {...props}
-              value={activePath in items && activePath}>
-            {Object.keys(items).map(x =>
-              <RoutedTab key={x} label={x} value={x} to={x}
-                  disabled={activePath === x} />)}
-          </Tabs>
-          <div style={{padding: '1rem'}}>
-            {activeContent}
-          </div>
-        </Paper>
-      )}}
-  </Route>
+const IconButtonLink = props =>
+  <IconButton {...props} component={Link} />
 
 const App = () =>
   <BrowserRouter>
-    <RoutedTabPanel
-        centered
-        indicatorColor="primary"
-        items={{
-          foo:
-            <div style={{color: 'tomato'}}>
-              <h1>Foo</h1>
-              Lorem ipsum
-            </div>,
-          bar:
-            <>
-              <h2>Bar</h2>
-              <ul>
-                {['one', 'two', 'three'].map(x =>
-                  <li key={x}>
-                    {x}
-                  </li>)}
-              </ul>
-            </>,
-          baz: <h3>Baz</h3>,
-        }} />
+    <Route>
+      {({location: {pathname: path}}) => {
+        const activeIconName = path.slice(1)
+        const ActiveIcon = icons[activeIconName]
+        const title = ActiveIcon ? activeIconName : "Click the icons"
+        return (
+          <Card>
+            <CardHeader
+                title={title}
+                avatar={ActiveIcon && <Avatar><ActiveIcon/></Avatar>}/>
+            <CardContent>
+              {Object.keys(icons)
+                .filter(iconName => iconName.endsWith('TwoTone'))
+                .map(iconName => {
+                  const Icon = icons[iconName]
+                  const color = iconName === activeIconName
+                    ? "secondary"
+                    : "default"
+                  return (
+                    <IconButtonLink key={iconName} to={iconName} color={color} >
+                      <Icon/>
+                    </IconButtonLink>
+                  )
+                })}
+            </CardContent>
+          </Card>
+        )
+      }}
+    </Route>
   </BrowserRouter>
 
 ReactDOM.render(
   <App/>,
-  document.getElementById('root')
+  document.querySelector('#mount-point'),
 )
 ```
 
+It can be expressed in ClojureScript with the `cljsx/jsx>` macro so,
+that it looks rather similar to the JS example above.
+
 ```clj
 (ns shadow-cljs-example.main
-  (:require ["react" :as react]
+  (:require ["react" :refer [createElement]]
             ["react-dom" :as react-dom]
             ["react-router-dom" :as rr]
-            ["@material-ui/core" :as m]
+            ["@material-ui/core" :as mui]
+            ["@material-ui/icons" :as icons]
             [cljsx.core :as cljsx]))
 
-(cljsx/react>>>
- (cljsx/defcomponent RoutedTab props
-   (<m/Tab ... props
-           :component rr/Link
-           >))
-
- (cljsx/defcomponent+js RoutedTabPanelX props {:keys [items]}
-   (<rr/Route>
-    (cljsx/fn-clj [{{path :pathname} :location}]
-                  (let [active-path (subs path 1)
-                        active-content (aget items active-path)]
-                    (<m/Paper>
-                     (<m/Tabs ... props
-                              :value (if (aget items active-path)
-                                       active-path
-                                       false) >
-                              (map #(<RoutedTab :key % :label % :value % :to %
-                                                :disabled (= % active-path) >)
-                                   (js/Object.keys items)))
-                     (<div :style {:padding "1rem"} >
-                           active-content))))))
-
-
- (cljsx/defcomponent+js RoutedTabPanel
-   {clj-items :items :as clj-props}
-   {js-items :items}
-   (<rr/Route>
-    (cljsx/fn-clj [{{path :pathname} :location}]
-                  (let [active-path (subs path 1)
-                        active-content (aget js-items active-path)]
-                    (<m/Paper>
-                     (<m/Tabs ... clj-props
-                              :value (if active-content active-path false) >
-                              (map #(<RoutedTab :key % :label % :value % :to %
-                                                :disabled (= % active-path) >)
-                                   (keys clj-items)))
-                     (<div :style {:padding "1rem"} >
-                           active-content))))))
+(cljsx/jsx>
+ (cljsx/defcomponent IconButtonLink props
+   (<mui/IconButton ... props :component rr/Link >))
 
  (defn App []
    (<rr/BrowserRouter>
-    (<RoutedTabPanel :centered
-                     :indicatorColor "primary"
-                     :items {:foo (<div :style {:color "tomato"} >
-                                        (<h1> "Foo")
-                                        "Lorem ipsum")
-                             :bar (<>
-                                   (<h2> "Bar")
-                                   (<ul>
-                                    (map #(<li :key % > %)
-                                         ["one" "two" "three"])))
-                             :baz (<h3> "Baz")} >)))
+    (<rr/Route>
+     (fn [js-route-props]
+       (let [path (-> js-route-props .-location .-pathname)
+             active-icon-name (subs path 1)
+             ^js ActiveIcon (aget icons active-icon-name)]
+         (<mui/Card>
+          (<mui/CardHeader :title (if ActiveIcon
+                                    active-icon-name
+                                    "Click the icons")
+                           :avatar (when ActiveIcon
+                                     (<mui/Avatar>
+                                      (<ActiveIcon>))) >)
+          (<mui/CardContent>
+           (for [icon-name (js/Object.keys icons)
+                 :when (.endsWith icon-name "TwoTone")
+                 :let [^js Icon (aget icons icon-name)]]
+             (<IconButtonLink :key icon-name
+                              :to icon-name
+                              :color (if (= icon-name active-icon-name)
+                                       "secondary"
+                                       "default") >
+                              (<Icon>))))))))))
 
  (react-dom/render
   (<App>)
-  (js/document.querySelector "#mount-point"))))
+  (js/document.querySelector "#mount-point")))
 ```
 
 

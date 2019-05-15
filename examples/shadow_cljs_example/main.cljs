@@ -1,53 +1,34 @@
 (ns shadow-cljs-example.main
   (:require ["react" :as react]
-            ["react-dom" :refer [render]]
+            ["react-dom" :as react-dom]
             ["react-router-dom" :as rr]
-            ["@material-ui/core" :as m]
-            ["@material-ui/icons" :as i]
-            [cljsx.core :refer [react>>> defcomponent]]))
+            ["@material-ui/core" :as mui]
+            ["@material-ui/icons" :as icons]
+            [cljsx.core :as cljsx]))
 
-(react>>>
+(cljsx/react>>>
+ (cljsx/defcomponent IconButtonLink props
+   (<mui/IconButton ... props :component rr/Link >))
 
- (defn Card []
-   (<m/Card>
-    (<m/CardHeader :avatar (<m/Avatar>
-                            (<i/Face>))
-                   :action (<m/IconButton>
-                            (<i/MoreVert>))
-                   :title "Andy & Lou"
-                   :subheader "Have you got a bandage?"
-                   >)
-    (<m/CardMedia :title "Andy & Lou"
-                  :style {:paddingTop "50%"}
-                  :image "https://bit.ly/2JhbEFN"
-                  >)
-    (<m/CardContent>
-     (<m/Typography :component "p" >
-                    "Lorem ipsum dolor sit amet"))
-    (<m/CardActions>)))
-
- (defcomponent RoutedTab props
-   (<m/Tab ... props
-           :component rr/Link
-           >))
-
- (render
-  (<rr/BrowserRouter>
-   (<div>
+ (defn App []
+   (<rr/BrowserRouter>
     (<rr/Route>
-     (fn [router-props]
-       (<m/Tabs :centered
-                :value (-> router-props
-                           .-location
-                           .-pathname
-                           (subs 1))
-                :indicatorColor "primary"
-                :textColor "primary"
-                >
-                (map #(<RoutedTab :key %
-                                  :label %
-                                  :value %
-                                  :to %
-                                  >)
-                     ["foo" "bar" "baz"]))))))
+     (fn [js-route-props]
+       (let [path (-> js-route-props .-location .-pathname)
+             active-icon-name (subs path 1)
+             ^js ActiveIcon (aget icons active-icon-name)
+             names (->> icons js/Object.keys (filter #(.endsWith % "Tone")))]
+         (<mui/Card>
+          (<mui/CardHeader :title (when ActiveIcon active-icon-name)
+                           :avatar (when ActiveIcon
+                                     (<mui/Avatar> (<ActiveIcon>))) >)
+          (<mui/CardContent>
+           (map #(let [^js Icon (aget icons %)
+                       color (if (= % active-icon-name) "secondary" "default")]
+                   (<IconButtonLink :key % :to % :color color >
+                                    (<Icon>)))
+                names))))))))
+
+ (react-dom/render
+  (<App>)
   (js/document.querySelector "#mount-point")))

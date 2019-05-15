@@ -252,11 +252,11 @@
        (apply ~func (cljs.core/js->clj args# :keywordize-keys true)))))
 
 ;; TODO: Should these be createElement and Fragment?
-(defjsx >>> createElement Fragment)
-(defjsx inferno>>> inferno-create-element/createElement inferno/Fragment)
-(defjsx react>>> react/createElement react/Fragment)
+(defjsx jsx> createElement Fragment)
+(defjsx inferno> inferno-create-element/createElement inferno/Fragment)
+(defjsx react> react/createElement react/Fragment)
 
 ;; These don't have fragment support
-(defjsx snabbdom>>> snabbdom-pragma/createElement Fragment)
-(defjsx nervjs>>> nervjs/createElement Fragment)
-(defjsx preact>>> preact/h Fragment)
+(defjsx snabbdom> snabbdom-pragma/createElement Fragment)
+(defjsx nervjs> nervjs/createElement Fragment)
+(defjsx preact> preact/h Fragment)

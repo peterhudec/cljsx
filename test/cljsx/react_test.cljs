@@ -21,19 +21,19 @@
   (js-or-clj props))
 
 (fact "No props"
-      (js->clj (sut/react>>> (<div>)))
+      (js->clj (sut/react> (<div>)))
       => (js->clj (e "div" nil))
 
-      (js->clj (sut/react>>> (<h1> "child")))
+      (js->clj (sut/react> (<h1> "child")))
       => (js->clj (e "h1" nil "child"))
 
-      (js->clj (sut/react>>> (<h1> "child1"
-                                   "child2")))
+      (js->clj (sut/react> (<h1> "child1"
+                                 "child2")))
       => (js->clj (e "h1" nil "child1" "child2")))
 
 (fact "Props"
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<h1 :className "foo" >
              "child1"
              "child2")))
@@ -44,7 +44,7 @@
              "child2"))
 
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<h1 :className "foo"
              :style {:color "red"} >
              "child1"
@@ -57,7 +57,7 @@
              "child2"))
 
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<h1 :className "foo"
              :style {:color "red"} >)))
       => (js->clj
@@ -71,7 +71,7 @@
 
 (fact "Spread"
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<h1 :className "foo"
              ... {:className "bar"} >)))
       => (js->clj
@@ -79,7 +79,7 @@
              (clj->js {:className "bar"})))
 
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<h1 :className "foo"
              ... {:className "bar"}
              :className "baz" >)))
@@ -88,7 +88,7 @@
              (clj->js {:className "baz"})))
 
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<h1 :className "foo"
              ... {:className "bar"}
              :className "baz"
@@ -98,7 +98,7 @@
              (clj->js {:className "bing"})))
 
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<h1 :className "foo"
              ... {:className "bar"}
              :className "baz"
@@ -110,7 +110,7 @@
                        spread-props-2)))))
 (fact "Nesting"
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<div>
          (<h1> "Title")
          (<h2> "Subtitle")
@@ -124,7 +124,7 @@
              "Text"))
 
       (js->clj
-       (sut/react>>>
+       (sut/react>
         (<div> "Parent"
                (<div> "Child"
                       (<div> "Grand child")))))
@@ -135,90 +135,90 @@
 
 (facts "JS Detection"
        (r
-        (sut/react>>>
+        (sut/react>
          (<JSComponent>)))
        => "js"
 
        (r
-        (sut/react>>>
+        (sut/react>
          (<DefnComponent>)))
        => "clj"
 
        (r
-        (sut/react>>>
+        (sut/react>
          (<DefnComponentJS>)))
        => "js"
 
        (let [Component (fn [p] (js-or-clj p))]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "clj"
 
        (let [Component js-or-clj]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "clj"
 
        (let [Component #(js-or-clj %)]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "clj"
 
        (let [^js Component js-or-clj]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "js"
 
        (let [Component JSComponent]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "js"
 
        ;; Functions lose their tag meta when they are passed as arguments.
        (let [Component (identity JSComponent)]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "clj"
 
        (let [^js Component (identity JSComponent)]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "js"
 
        (let [Component ((fn [c] c) JSComponent)]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "clj"
 
        (let [^js Component ((fn [c] c) JSComponent)]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "js"
 
        (let [Component ((fn [] JSComponent))]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "js"
 
        (let [Component (identity DefnComponent)]
          (r
-          (sut/react>>>
+          (sut/react>
            (<Component>))))
        => "clj"
 
        (let [f (fn [Component]
                  (r
-                  (sut/react>>>
+                  (sut/react>
                    (<Component>))))]
          (f DefnComponent)
          => "clj"
@@ -233,27 +233,27 @@
 
          ;; A function's metadata is lost if the function is defined
          ;; in the same JSX block where it is then used.
-         (sut/react>>>
+         (sut/react>
           (defn DefnInsideJSX [props]
             (js-or-clj props))
           (r (<DefnInsideJSX>)))
          => "js"
 
          ;; Tagging has no effect here
-         (sut/react>>>
+         (sut/react>
           (defn ^function DefnInsideJSX2 [props]
             (js-or-clj props))
           (r (<DefnInsideJSX2>)))
          => "js"
 
-         (sut/react>>>
+         (sut/react>
           (let [Component (fn [props]
                             (js-or-clj props))]
             (r (<Component>))))
          => "clj"
 
          ;; Metadata is lost if def is inside JSX
-         (sut/react>>>
+         (sut/react>
           (def DefInsideJSX (fn [props]
                               (js-or-clj props)))
           (r (<DefInsideJSX>)))
@@ -262,7 +262,7 @@
 (facts "Other forms"
        (fact "Shorthand function"
              (r
-              (sut/react>>>
+              (sut/react>
                (<ul>
                 (map #(<li :key % > %)
                      ["a" "b" "c"]))))
@@ -277,14 +277,14 @@
                                  "a comes before b"
                                  "b comes before a"))]
                (r
-                (sut/react>>>
+                (sut/react>
                  (<Component :a 5
                              :b 3
                              :comparator < >)))
                => "b comes before a"
 
                (r
-                (sut/react>>>
+                (sut/react>
                  (<Component :a 5
                              :b 3
                              :comparator @#'> >)))
@@ -386,7 +386,7 @@
                                  "AAA")
                            :b (e "span" nil
                                  "BBB")})))
-      => (sut/react>>>
+      => (sut/react>
           (let [Component (sut/component-js
                            {:keys [a b]}
                            (<ul>

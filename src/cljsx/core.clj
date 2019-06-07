@@ -63,19 +63,17 @@
                                    ;; but it works with let binding.
                                    (resolved-tag# (cljs.core/js->clj
                                                    props#
-                                                   :keywordize-keys true)))))
-            env-aware-tag (if cljs-env
-                            intercepted-tag
-                            resolved-tag)
-            env-aware-props (if (and props cljs-env)
-                              `(cljs.core/clj->js ~props)
-                              props)
-            env-aware-children (if cljs-env
-                                 (map (fn [child]
-                                        `(cljs.core/clj->js ~child))
-                                      unformed-children)
-                                 unformed-children)]
-        `(~jsx-symbol ~env-aware-tag ~env-aware-props ~@env-aware-children)))))
+                                                   :keywordize-keys true)))))]
+        (if cljs-env
+          `(if (cljsx.core/js? ~jsx-symbol)
+             (apply ~jsx-symbol
+                    ~intercepted-tag
+                    (cljs.core/clj->js ~props)
+                    (map cljs.core/clj->js ~(into [] unformed-children)))
+             (~jsx-symbol ~resolved-tag ~props ~@unformed-children))
+          ;; We don't wanna pollute the expansion with JS related stuff
+          ;; if not in CLJS environment
+          `(~jsx-symbol ~resolved-tag ~props ~@unformed-children))))))
 
 (defn wrap-in-do [[x & more :as args]]
   (if (empty? more)
@@ -260,3 +258,4 @@
 (defjsx snabbdom> snabbdom-pragma/createElement Fragment)
 (defjsx nervjs> nervjs/createElement Fragment)
 (defjsx preact> preact/h Fragment)
+

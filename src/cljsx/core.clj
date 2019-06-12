@@ -55,22 +55,22 @@
                                               normalize-tag
                                               symbol))
             intercepted-tag `(let [resolved-tag# ~resolved-tag]
-                               (if (cljsx.core/js? ~resolved-tag)
-                                 resolved-tag#
+                               (if (cljsx.core/clj? ~resolved-tag)
                                  (fn [props#]
                                    ;; If we try to do (~resolved-tag ...),
                                    ;; compilation fails,
                                    ;; but it works with let binding.
                                    (resolved-tag# (cljs.core/js->clj
                                                    props#
-                                                   :keywordize-keys true)))))]
+                                                   :keywordize-keys true)))
+                                 resolved-tag#))]
         (if cljs-env
-          `(if (cljsx.core/js? ~jsx-symbol)
-             (apply ~jsx-symbol
-                    ~intercepted-tag
-                    (cljs.core/clj->js ~props)
-                    (map cljs.core/clj->js ~(into [] unformed-children)))
-             (~jsx-symbol ~resolved-tag ~props ~@unformed-children))
+          `(if (cljsx.core/clj? ~jsx-symbol)
+            (~jsx-symbol ~resolved-tag ~props ~@unformed-children)
+            (apply ~jsx-symbol
+                   ~intercepted-tag
+                   (cljs.core/clj->js ~props)
+                   (map cljs.core/clj->js ~(into [] unformed-children))))
           ;; We don't wanna pollute the expansion with JS related stuff
           ;; if not in CLJS environment
           `(~jsx-symbol ~resolved-tag ~props ~@unformed-children))))))
@@ -102,23 +102,23 @@
         c (:cljs.analyzer/constants ns)]
     (boolean (or a b c))))
 
-(defmacro js?
-  "Checks whether `x` is a JavaScript value.
-  Returns `nil` if it can't be determined if it's
-  a JavaScript or Clojure value."
+(defmacro clj?
+  "Checks whether `x` is a Clojure value.
+  Returns `nil` if it can't be determined."
   [x]
   (let [locals (:locals &env)
         defs (get-in &env [:ns :defs])
         all (merge locals defs)
         entry (all x)]
     (if-not entry
-      ;; If there's no entry, it's a JS object
-      #_true
-      "NO ENTRY"
+      ;; If there's no entry, it's a JS object, except for a case
+      ;; when a CLJ function was passed through identity
+      ;; (with-out-str (clojure.pprint/pprint all))
+      nil
       ;; Otherwise...
       (case (:tag entry)
         ;; If tag is 'js we can be sure it's a JS value.
-        js true
+        js false
         ;; If tag is 'any, we can't tell,
         ;; This is probably a value returned from a function.
         any nil
@@ -126,18 +126,18 @@
         ;; We can for example check on the presence of :meta
         nil (if (:meta entry)
               ;; If there is the :meta key, it is a CLJ value
-              false
+              true
               ;; Otherwise we can't tell
               nil)
         ;; If tag is anything except for the above,
         ;; it's a CLJ value.
-        false))))
+        true))))
 
 (def jsify-props identity)
 (def cljify-props identity)
 (def js-obj-or-map? map?)
 
-(defn component-impl [interceptor-sym args]
+(defn- component-impl [interceptor-sym args]
   (let [{:keys [props body] :as args'} (s/conform ::specs/component-args args)
         fn-name (get-in args' [:quoted-name :symbol])
         possible-fn-name (if fn-name [fn-name] [])

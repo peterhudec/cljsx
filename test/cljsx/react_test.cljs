@@ -159,7 +159,7 @@
          (r
           (sut/react>
            (<Component>))))
-       => "clj"
+       => "js"
 
        (let [Component #(js-or-clj %)]
          (r
@@ -179,12 +179,24 @@
            (<Component>))))
        => "js"
 
-       ;; Functions lose their tag meta when they are passed as arguments.
-       (let [Component (identity JSComponent)]
+       ;; Functions lose their tag meta when they are passed trhrough identity.
+       (let [Component (identity DefnComponent)]
+         (r
+          (sut/react>
+           (<Component>))))
+       => "js"
+
+       (let [^cljs Component (identity DefnComponent)]
          (r
           (sut/react>
            (<Component>))))
        => "clj"
+
+       (let [Component (identity JSComponent)]
+         (r
+          (sut/react>
+           (<Component>))))
+       => "js"
 
        (let [^js Component (identity JSComponent)]
          (r
@@ -192,11 +204,24 @@
            (<Component>))))
        => "js"
 
-       (let [Component ((fn [c] c) JSComponent)]
+       ;; Basically functions lose their meta if passed as arguments.
+       (let [Component ((fn [c] c) DefnComponent)]
+         (r
+          (sut/react>
+           (<Component>))))
+       => "js"
+
+       (let [^cljs Component ((fn [c] c) DefnComponent)]
          (r
           (sut/react>
            (<Component>))))
        => "clj"
+
+       (let [Component ((fn [c] c) JSComponent)]
+         (r
+          (sut/react>
+           (<Component>))))
+       => "js"
 
        (let [^js Component ((fn [c] c) JSComponent)]
          (r
@@ -204,32 +229,31 @@
            (<Component>))))
        => "js"
 
+       ;; TODO: What happens here?
        (let [Component ((fn [] JSComponent))]
          (r
           (sut/react>
            (<Component>))))
        => "js"
 
-       (let [Component (identity DefnComponent)]
-         (r
-          (sut/react>
-           (<Component>))))
-       => "clj"
-
        (let [f (fn [Component]
                  (r
                   (sut/react>
+                   (<Component>))))
+             g (fn [^cljs Component]
+                 (r
+                  (sut/react>
                    (<Component>))))]
-         (f DefnComponent)
-         => "clj"
+         ;; Meta is lost by passing the functions as arguments
+         (f DefnComponent) => "js"
+         (f JSComponent) => "js"
 
-         ;; JS info lost
-         (f JSComponent)
-         => "clj"
+         ;; g has its argument annotated with a non-js tag e.g. ^cljs
+         (g DefnComponent) => "clj"
+         (g JSComponent) => "clj"
 
          ;; The only thing we can do is force argument conversion to JS.
-         (f (sut/with-js-args JSComponent))
-         => "js"
+         (f (sut/with-js-args JSComponent)) => "js"
 
          ;; A function's metadata is lost if the function is defined
          ;; in the same JSX block where it is then used.

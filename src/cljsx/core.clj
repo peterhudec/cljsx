@@ -233,48 +233,24 @@
         (cljsx.core/cljify-props props#)
         (cljsx.core/jsify-props props#)))))
 
-;; (defmacro fn-clj [& fn-args]
-;;   (let [func `(fn ~@fn-args)]
-;;     `(fn [& args#]
-;;        (apply ~func (cljs.core/js->clj args# :keywordize-keys true)))))
-
-(s/def ::fn-args
-  (s/cat :fn-name (s/? simple-symbol?)
-         :fn-tail (s/alt :arity-1 ::cs/params+body
-                         :arity-n (s/+ (s/spec ::cs/params+body)))))
-
-(defn- restructure-arglist [arglist]
-  (map #(or (#{'&} %) (gensym)) arglist))
-
-(restructure-arglist '[x [y] z & more])
-
-(defn- foo [params body]
-  (let [restructured (restructure-arglist params)]
-    `(fn [~@restructured]
-       ((fn [~@params]
-                ~@body)
-        ~@(map #(conj `(js->clj %)) restructured)))))
-
-;; TODO: Don't forget to delete this when done with the defn macros
-(defn js->clj [x] [:clj x])
-
 (defn- intercept-fn-tail [[params & body]]
   (let [[pos-args [_ rest-arg]] (split-with #(not= % '&) params)
         pos-arg-aliases (map #(if (symbol? %) % (gensym)) pos-args)
         possible-rest-arg (if rest-arg ['& rest-arg] [])
         rest-arg-conversion (if rest-arg
-                              `(map js->clj ~rest-arg)
+                              `(map #(cljs.core/js->clj % :keywordize-keys true)
+                                    ~rest-arg)
                               [])]
     `([~@pos-arg-aliases ~@possible-rest-arg]
       (apply (fn [~@params]
                ~@body)
              ~@(map (fn [x]
-                      `(js->clj ~x))
+                      `(cljs.core/js->clj ~x :keywordize-keys true))
                     pos-arg-aliases)
              ~rest-arg-conversion))))
 
 (defmacro fn-clj [& fn-args]
-  (let [{fn-name :fn-name [arity] :fn-tail} (s/conform ::fn-args fn-args)
+  (let [{fn-name :fn-name [arity] :fn-tail} (s/conform ::specs/fn-args fn-args)
         possible-fn-name (if fn-name [fn-name] [])
         fn-tail (if fn-name (rest fn-args) fn-args)
         multi-arity-fn-tail (if (= arity :arity-1)
@@ -282,20 +258,27 @@
                               (map intercept-fn-tail fn-tail))]
     `(fn ~@possible-fn-name ~@multi-arity-fn-tail)))
 
-(defmacro defn-clj
-  [& defn-args]
-  (let [{:keys [fn-name
+(defmacro defn-clj [& defn-args]
+  (let [{[arity] :fn-tail
+         :keys [fn-name
                 docstring
-                params
-                body]} (s/conform ::specs/defn-clj-args defn-args)
+                meta]} (s/conform ::cs/defn-args defn-args)
         possible-docstring (if docstring [docstring] [])
-        params' (s/unform ::cs/param-list params)
-        body' (s/unform ::specs/fn-body body)
-        func `(fn [~@params'] ~@body')]
-    `(defn ~fn-name ~@possible-docstring [& args#]
-       (apply ~func (cljs.core/js->clj args# :keywordize-keys true)))))
-
-
+        possible-meta (if meta [meta] [])
+        ;; Drop that many items how many defn-arguments there are
+        ;; in front of the function tail.
+        fn-tail (drop (->> [docstring meta]
+                           (filter some?)
+                           count
+                           inc)
+                      defn-args)
+        multi-arity-fn-tail (if (= arity :arity-1)
+                              (intercept-fn-tail fn-tail)
+                              (map intercept-fn-tail fn-tail))]
+    `(defn ~fn-name
+       ~@possible-docstring
+       ~@possible-meta
+       ~@multi-arity-fn-tail)))
 
 (defjsx jsx> createElement Fragment)
 (defjsx inferno> inferno-create-element/createElement inferno/Fragment)

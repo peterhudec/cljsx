@@ -247,9 +247,9 @@
   :ret any?)
 
 (s/fdef cljsx.core/fn-clj
-  :args ::fn-clj-args
+  :args ::fn-args
   :ret any?)
 
 (s/fdef cljsx.core/defn-clj
-  :args ::defn-clj-args
+  :args ::cs/defn-args
   :ret any?)

@@ -55,7 +55,7 @@
                                               normalize-tag
                                               symbol))
             intercepted-tag `(let [resolved-tag# ~resolved-tag]
-                               (if (cljsx.core/clj? ~resolved-tag)
+                               (if (cljsx.core/clj-fn? ~resolved-tag)
                                  (fn [props#]
                                    ;; If we try to do (~resolved-tag ...),
                                    ;; compilation fails,
@@ -65,7 +65,7 @@
                                                    :keywordize-keys true)))
                                  resolved-tag#))]
         (if cljs-env
-          `(if (cljsx.core/clj? ~jsx-symbol)
+          `(if (cljsx.core/clj-fn? ~jsx-symbol)
             (~jsx-symbol ~resolved-tag ~props ~@unformed-children)
             (apply ~jsx-symbol
                    ~intercepted-tag
@@ -75,7 +75,7 @@
           ;; if not in CLJS environment
           `(~jsx-symbol ~resolved-tag ~props ~@unformed-children))))))
 
-(defn wrap-in-do [[x & more :as args]]
+(defn- wrap-in-do [[x & more :as args]]
   (if (empty? more)
     x
     `(do ~@args)))
@@ -95,16 +95,18 @@
        :args :cljsx.specs/forms
        :ret any?)))
 
-(defn cljs-env? [&env]
+(defn- cljs-env? [&env]
   (let [ns (:ns &env)
         a (:js-globals &env)
         b (:js-aliases ns)
         c (:cljs.analyzer/constants ns)]
     (boolean (or a b c))))
 
-(defmacro clj?
-  "Checks whether `x` is a Clojure value.
-  Returns `nil` if it can't be determined."
+(defmacro clj-fn?
+  "Checks whether `x` is a Clojure function.
+  Returns `true` if it is certain that the argument is a Clojure function,
+  `false` if it is certain that it's JavaScript function and `nil` if
+  it can't be determined."
   [x]
   (let [locals (:locals &env)
         defs (get-in &env [:ns :defs])
@@ -231,10 +233,54 @@
         (cljsx.core/cljify-props props#)
         (cljsx.core/jsify-props props#)))))
 
+;; (defmacro fn-clj [& fn-args]
+;;   (let [func `(fn ~@fn-args)]
+;;     `(fn [& args#]
+;;        (apply ~func (cljs.core/js->clj args# :keywordize-keys true)))))
+
+(s/def ::fn-args
+  (s/cat :fn-name (s/? simple-symbol?)
+         :fn-tail (s/alt :arity-1 ::cs/params+body
+                         :arity-n (s/+ (s/spec ::cs/params+body)))))
+
+(defn- restructure-arglist [arglist]
+  (map #(or (#{'&} %) (gensym)) arglist))
+
+(restructure-arglist '[x [y] z & more])
+
+(defn- foo [params body]
+  (let [restructured (restructure-arglist params)]
+    `(fn [~@restructured]
+       ((fn [~@params]
+                ~@body)
+        ~@(map #(conj `(js->clj %)) restructured)))))
+
+;; TODO: Don't forget to delete this when done with the defn macros
+(defn js->clj [x] [:clj x])
+
+(defn- intercept-fn-tail [[params & body]]
+  (let [[pos-args [_ rest-arg]] (split-with #(not= % '&) params)
+        pos-arg-aliases (map #(if (symbol? %) % (gensym)) pos-args)
+        possible-rest-arg (if rest-arg ['& rest-arg] [])
+        rest-arg-conversion (if rest-arg
+                              `(map js->clj ~rest-arg)
+                              [])]
+    `([~@pos-arg-aliases ~@possible-rest-arg]
+      (apply (fn [~@params]
+               ~@body)
+             ~@(map (fn [x]
+                      `(js->clj ~x))
+                    pos-arg-aliases)
+             ~rest-arg-conversion))))
+
 (defmacro fn-clj [& fn-args]
-  (let [func `(fn ~@fn-args)]
-    `(fn [& args#]
-       (apply ~func (cljs.core/js->clj args# :keywordize-keys true)))))
+  (let [{fn-name :fn-name [arity] :fn-tail} (s/conform ::fn-args fn-args)
+        possible-fn-name (if fn-name [fn-name] [])
+        fn-tail (if fn-name (rest fn-args) fn-args)
+        multi-arity-fn-tail (if (= arity :arity-1)
+                              (intercept-fn-tail fn-tail)
+                              (map intercept-fn-tail fn-tail))]
+    `(fn ~@possible-fn-name ~@multi-arity-fn-tail)))
 
 (defmacro defn-clj
   [& defn-args]
@@ -249,7 +295,8 @@
     `(defn ~fn-name ~@possible-docstring [& args#]
        (apply ~func (cljs.core/js->clj args# :keywordize-keys true)))))
 
-;; TODO: Should these be createElement and Fragment?
+
+
 (defjsx jsx> createElement Fragment)
 (defjsx inferno> inferno-create-element/createElement inferno/Fragment)
 (defjsx react> react/createElement react/Fragment)

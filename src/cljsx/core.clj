@@ -66,11 +66,11 @@
                                  resolved-tag#))]
         (if cljs-env
           `(if (cljsx.core/clj-fn? ~jsx-symbol)
-            (~jsx-symbol ~resolved-tag ~props ~@unformed-children)
-            (apply ~jsx-symbol
-                   ~intercepted-tag
-                   (cljs.core/clj->js ~props)
-                   (map cljs.core/clj->js ~(into [] unformed-children))))
+             (~jsx-symbol ~resolved-tag ~props ~@unformed-children)
+             (apply ~jsx-symbol
+                    ~intercepted-tag
+                    (cljs.core/clj->js ~props)
+                    (map cljs.core/clj->js ~(into [] unformed-children))))
           ;; We don't wanna pollute the expansion with JS related stuff
           ;; if not in CLJS environment
           `(~jsx-symbol ~resolved-tag ~props ~@unformed-children))))))

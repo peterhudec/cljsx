@@ -44,9 +44,16 @@ namespace.
             [react-dom :as react-dom]))
 
 (react-dom/render
+  ;; The JSX macro call
   (jsx>
+   ;; This s-expression is recognized as a JSX expression, because the item
+   ;; at the function call position is recognized as a JSX tag by the macro.
    (<>
-    (<h1> "Hello, CLJSX!")))
+    ;; This is not recognized as a jsx-expression, because the first item of
+    ;; the s-expression is not a JSX tag.
+    (str "Hello, ")
+    ;; This is a JSX expression, because the first item is a JSX tag.
+    (<h1> "CLJSX!")))
   (js/document.querySelector "#mount-point"))
 
 ;; The jsx> macro call expands to

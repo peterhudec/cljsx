@@ -136,114 +136,125 @@
 (facts "JS Detection"
        (r
         (sut/react>
-         (<JSComponent>)))
+         (<JSComponent :x >)))
        => "js"
 
        (r
         (sut/react>
-         (<DefnComponent>)))
+         (<DefnComponent :x >)))
        => "clj"
 
        (r
         (sut/react>
-         (<DefnComponentJS>)))
+         (<DefnComponentJS :x >)))
        => "js"
 
        (let [Component (fn [p] (js-or-clj p))]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "clj"
 
        (let [Component js-or-clj]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
+
+       (let [^cljs Component js-or-clj]
+         (r
+          (sut/react>
+           (<Component :x >))))
+       => "clj"
 
        (let [Component #(js-or-clj %)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "clj"
 
-       (let [^js Component js-or-clj]
+       (let [Component (fn [props] (js-or-clj props))]
          (r
           (sut/react>
-           (<Component>))))
-       => "js"
+           (<Component :x >))))
+       => "clj"
 
        (let [Component JSComponent]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
 
        ;; Functions lose their tag meta when they are passed trhrough identity.
        (let [Component (identity DefnComponent)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
 
        (let [^cljs Component (identity DefnComponent)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "clj"
 
        (let [Component (identity JSComponent)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
 
        (let [^js Component (identity JSComponent)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
 
        ;; Basically functions lose their meta if passed as arguments.
        (let [Component ((fn [c] c) DefnComponent)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
 
        (let [^cljs Component ((fn [c] c) DefnComponent)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "clj"
 
        (let [Component ((fn [c] c) JSComponent)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
 
        (let [^js Component ((fn [c] c) JSComponent)]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
 
-       ;; TODO: What happens here?
+       (let [Component ((fn [] DefnComponent))]
+         (r
+          (sut/react>
+           (<Component :x >))))
+       => "js"
+
        (let [Component ((fn [] JSComponent))]
          (r
           (sut/react>
-           (<Component>))))
+           (<Component :x >))))
        => "js"
 
        (let [f (fn [Component]
                  (r
                   (sut/react>
-                   (<Component>))))
+                   (<Component :x >))))
              g (fn [^cljs Component]
                  (r
                   (sut/react>
-                   (<Component>))))]
+                   (<Component :x >))))]
          ;; Meta is lost by passing the functions as arguments
          (f DefnComponent) => "js"
          (f JSComponent) => "js"
@@ -260,27 +271,27 @@
          (sut/react>
           (defn DefnInsideJSX [props]
             (js-or-clj props))
-          (r (<DefnInsideJSX>)))
+          (r (<DefnInsideJSX :x >)))
          => "js"
 
          ;; Tagging has no effect here
          (sut/react>
           (defn ^function DefnInsideJSX2 [props]
             (js-or-clj props))
-          (r (<DefnInsideJSX2>)))
+          (r (<DefnInsideJSX2 :x >)))
          => "js"
 
          (sut/react>
           (let [Component (fn [props]
                             (js-or-clj props))]
-            (r (<Component>))))
+            (r (<Component :x >))))
          => "clj"
 
          ;; Metadata is lost if def is inside JSX
          (sut/react>
           (def DefInsideJSX (fn [props]
                               (js-or-clj props)))
-          (r (<DefInsideJSX>)))
+          (r (<DefInsideJSX :x >)))
          => "js"))
 
 (facts "Other forms"

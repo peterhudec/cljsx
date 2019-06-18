@@ -829,10 +829,10 @@ components, which is a common pattern in [React] used in libraries like
 [React Router], [Material-UI] and many more.
 
 ```clj
-
+;; TODO: Ad a defcomponent-js example
 ```
 
-
+[fn]: https://clojuredocs.org/clojure.core/fn
 [defn]: https://clojuredocs.org/clojure.core/defn
 [clj->js]: https://cljs.github.io/api/cljs.core/clj-GTjs
 [js->clj]: https://cljs.github.io/api/cljs.core/js-GTclj

@@ -75,7 +75,7 @@
           ;; if not in CLJS environment
           `(~jsx-symbol ~resolved-tag ~props ~@unformed-children))))))
 
-(defn- wrap-in-do [[x & more :as args]]
+(defn wrap-in-do [[x & more :as args]]
   (if (empty? more)
     x
     `(do ~@args)))
@@ -95,7 +95,7 @@
        :args :cljsx.specs/forms
        :ret any?)))
 
-(defn- cljs-env? [&env]
+(defn cljs-env? [&env]
   (let [ns (:ns &env)
         a (:js-globals &env)
         b (:js-aliases ns)
@@ -209,11 +209,13 @@
   [& args]
   (defcomponent-impl 'cljsx.core/cljify-props args))
 
+;; TODO: There doesn't seem to be a usecase for this macro.
 (defmacro defcomponent-js
   "Same as (def name (component-js param exprs))"
   [& args]
   (defcomponent-impl 'cljsx.core/jsify-props args))
 
+;; TODO: There doesn't seem to be a usecase for this macro
 (defmacro defcomponent+js
   "Same as (def name (component+js param exprs))"
   [& args]

@@ -1,24 +1,98 @@
-# `cljsx` A.K.A. [JSX] for Clojure and ClojureScript
+# `cljsx` The Missing [JSX] Macro
 
-`cljsx` tries to make it easy to use plain, unwrapped [React] (or any other
-virtual dom) and all the related JavaScript libraries in ClojureScript by
-mimicking the syntax of [JSX]. It's mainly meant to be used with the amazing
-[shadow-cljs] with its effortless usage of plain NPM packages, but it works just
-as well with [Figwheel] and Clojure. 
+[![Clojars Project](https://img.shields.io/clojars/v/cljsx.svg)](https://clojars.org/cljsx) 
+[![Build Status](https://travis-ci.org/peterhudec/cljsx.svg?branch=master)](https://travis-ci.org/peterhudec/cljsx)
+
+`cljsx` tries to make it as easy as possible to use plain, unwrapped [React]
+(or any other virtual dom) and all the related JavaScript libraries in
+ClojureScript by mimicking the syntax of [JSX]. It's mainly meant to be used
+with the amazing [shadow-cljs] with its effortless usage of plain NPM packages,
+but it works just as well with [Figwheel] and Clojure.
+
+## TL;DR
+
+It's just a macro which transforms occurences of _JSX expressions_ into
+`(createElement tag props child-1 child-2 ,,,)` calls. It doesn't care about
+what `createElement` points to, this is up to you. That's why it works with most
+of the _vdom_ libraries.
+
+### Features
+
+* Not another [React] wrapper, just a macro. 
+* Works with all _vdom_ libraries which have the `createEelement` signature.
+* JSX expressions can appear anywhere and can be arbitrarily nested. That's why
+  it works so well with libraries like [React Router] or [Material-UI].
+  Whole namespaces can be wrapped in the macro.
+* Has _props spread_ operator similar to `<div {...props} />`. 
+* Supports _truthy props_ shorthand as in `<button disabled />`.
+* Automatically converts from and to JS if needed.
+* Built with [spec], so you'll know early when something goes wrong.
+
+```clj
+(ns shadow-cljs-example.main
+  (:require ["react" :refer [createElement Fragment]]
+            ["react-dom" :as react-dom]
+            ["@material-ui/core" :as material-ui]
+            ["@material-ui/icons" :as material-icons]
+            [cljsx.core :as cljsx]))
+
+;; Components are just functions
+(defn MyComponent [props] "I'm just a function")
+
+;; The jsx> macro expands all JSX expressions to createElement calls.
+(cljsx/jsx>
+ ;; This is not a JSX expression so it will not be transformed.
+ (react-dom/render
+  ;; This is a JSX expression with the intrinsic "div" tag, it expands to:
+  ;; (createElement "div" nil (createElement "button" ,,,))
+  (<div>
+   ;; This is a JSX expression with props, expands to:
+   ;; (createElement "button" (clj->js {:onClick #(println "click") :disabled true}) "Click me").
+   (<button :onClick #(println "click")
+            ;; This is a shorthand truthy prop
+            :disabled >
+            "Click me")
+   (let [foo {:foo "FOO"}]
+     ;; There's a syntax for props spreading, expands to:
+     ;; (createElement "h1" (clj->js (merge {:bar "BAR"} {:className "title"} foo)) "Hello, CLJSX!").
+     (<h1 ... {:bar "BAR"}
+          :className "title"
+          ... foo >
+          "Hello, CLJSX!"))
+   ;; If the tag name starts with upercase, it will expand to a symbol:
+   ;; (createElement MyComponent nil).
+   (<MyComponent>)
+   ;; The tag name can be namespaced, but the last part must be capitalized.
+   ;; Working with NPM React libraries is a pleasure.
+   (<material-ui/Chip :label "Foo"
+                      ;; JSX expressions can be nested.
+                      :avatar (<material-ui/Avatar>
+                               (<material-icons/Favorite>)) >)
+   (<ul>
+    ;; JSX expressions can appear anywhere.
+    (map #(<li :key % > %) ["foo" "bar" "baz"])
+    ;; Fragment tag is supported, expands to (createElement Fragment nil ,,,).
+    (<>
+     (<li> "bing"))))
+  (js/document.querySelector "#mount-point")))
+```
+
+## Motivation
 
 If you think about it, [JSX] is just a _reader macro_, which merely adds
-syntactic sugar to JavaScript. Surprisingly, in Clojure, the language of macros,
-there's no such thing as [JSX]. Instead there are all sorts of [React] wrappers
-and wrappers of [React] libraries. The most idiomatic way to express [React] DOM
-trees in Clojure seems to be the [_hiccup_](https://github.com/teropa/hiccups)
-format of nested vectors.
+syntactic sugar to JavaScript. Oddly enough in ClojureScript, the problem of
+woring with [React] is mostly approached by inventing all sorts of wrappers,
+which more often than not come bundled with their own state managemet.
+The most idiomatic way to express [React] DOM trees in Clojure seems to be the
+[hiccups] format of nested vectors, which probably stems from the obsession with
+data in Clojure (as if lists were not data enough).
 
-`cljsx` is trying to fill this gap with the `cljsx/jsx>` macro, which is the 
-main workhorse it provides, apart from a bunch of additional macros all related
-to simplifying conversion between Clojure and JavaScript. It's main goal is
-expressiveness, readability and familiarity with [React] idioms. `cljsx` is not
-tied to [React] in any way and it works with any other [JSX] compatible virtual
-dom library like [Inferno], [Nerv], [Preact] or [Snabbdom].
+`cljsx.core/jsx>` is the missing macro. It's the main workhorse of the package
+alongside a bunch of helpers for taming the JavaScript conversion.
+The main goal of the package is expressiveness, readability and familiarity with
+[React] idioms. `cljsx` is not tied to [React] in any way other than through the
+signature of the `createElement` function and it works with all [JSX]
+compatible libraries like [Inferno], [Nerv], [Preact] or [Snabbdom].
 
 ## Usage
 
@@ -32,9 +106,9 @@ will be kept unchanged.
 ;; => (createElement "div" nil)  
 ```
 
-So if you want the above example to work with [React], the `createElement`
-function should be _refered_ from the `react` namespace. Also if you will use
-the _fragment_ tag `<>`, the `Fragment` name should be imported from the same
+So if you want the above example to work with [React], you should _refer_
+`createElement` from the `react` namespace. Similarly, if you intend to use the
+`<>` _fragment tag_, you should also refer the `Fragment` name from the same
 namespace.
 
 ```clj
@@ -80,8 +154,7 @@ and `react/Fragment`.
   (js/document.querySelector "#mount-point"))
 ```
 
-There are other macros with the _pragmas_ bound to other [JSX] compatible
-frameworks.
+There are other macros with _pragmas_ bound to other [JSX] compatible frameworks.
 
 * `inferno>` bound to `inferno-create-element/createElement` and
   `inferno/Fragment`.
@@ -90,14 +163,14 @@ frameworks.
 * `snabbdom>` bound to `snabbdom/createElement` and `Fragment`
 
 Notice that the last three macros are bound to unprefixed `Fragment`. This is
-because none of these frameworks seems to have a notion of a _fragment_.
+because none of these frameworks seems to actually have a notion of a _fragment_.
 Having it bound to `Fragment` allows you to choose how the fragment will be
 interpreted. You could for example fall back to a _div_ with
 `(def Fragment "div")` or make it a function which throws an exception, or just
 let it fail on the undeclared `Fragment` var.
 
 You can even create your own JSX macro with the `cljsx/defjsx` macro, which is
-how all the aforementioned macros are created. Note that as `defjsx` is a macro
+how all the aforementioned macros are defined. Note that as `defjsx` is a macro
 which creates macros, it needs to be called in a `clj` or `cljc` file.
 
 ```clj
@@ -105,7 +178,7 @@ which creates macros, it needs to be called in a `clj` or `cljc` file.
 (ns my-jsx-app.main
   (:require [cljsx.core :as cljsx])) 
 
-(cljsx/defmacro my-jsx-macro my-create-element my-fragment)
+(cljsx/defjsx my-jsx-macro my-create-element my-fragment)
 
 (def my-fragment :fragment)
 
@@ -138,13 +211,14 @@ character is a _JSX tag_. The string of characters between the opening `<` and
 the optional closing `>` is the _tag name_ e.g. `<>`, `<a>`, `<div`, `<foo>`,
 `<bar`, `<Baz>`, `<Bing`, `<foo.bar/Baz>`, `<foo/bar.Baz`. The following are
 still _JSX tags_ even though they have invalid names: `<foo.bar>`, `<<>`,
-`<..foo>`. 
+`<..foo>`. This is to fail early on [spec] violation, as opposed to undeclared
+var errors.
 
 #### Intrinsic Tags
 
 `JSX tags` with all lowercase, alphanumeric _names_ are _intrinsic_ and will
-expand to a `createElement` call where the tag name will be passed as string
-as the first argument e.g. `<div>`, `<a>`, `<h1>`, `<span>`, `<foobarbaz>`.
+expand to a `createElement` call with the tag name in a string literal e.g.
+`<div>`, `<a>`, `<h1>`, `<span>`, `<foobarbaz>`.
 
 ```clj
 (macroexpand (cljsx/jsx> (<foo>)))
@@ -173,7 +247,7 @@ considered to be _reference tags_.
 #### Invalid Tags
 
 Anything else is recognized as an _invalid tag_ and will be reported by the
-specs during compile time. 
+[spec] during compile time. 
 
 ### Simple JSX Expressions Without _Props_
 
@@ -191,7 +265,7 @@ argument.
 
 ### JSX Expressions With _Props_
 
-If the tag does *not* end with the `>` character, the `cljsx/jsx>` macro will
+If the tag does *not* end with the `>` character, the `jsx>` macro will
 will expect a _sequence of props_ after the tag, terminated by the `>` symbol.
 A _prop_ is either:
 
@@ -199,9 +273,34 @@ A _prop_ is either:
 * A keyword followed by a non-keyword expression
 * The `...` symbol followed by a _spreadable_ expression.
 
-Note that `cljsx` doesn't do any _prop_ name conversion e.g. hyphenization, etc.
+Note that `cljsx` doesn't do any _prop_ name conversion e.g. hyphenization, etc,
+as it is none of its business. If you wan't to write [React] props hyphenized,
+or, you wan't to use `:class` instead of `:className`, you can wrap
+`react/createElement` in your own `createElement` implementation
+where you can intercept the props and forward them transformed to [React]:
 
-TODO: Give an example of how they can make an intercepted JSX which hyphenates.
+```clj
+(ns shadow-cljs-example.main
+  (:require ["react" :as react]
+            ["react-dom" :as react-dom]
+            [camel-snake-kebab.core :as csk]
+            [cljsx.core :as cljsx]))
+
+(defn createElement [tag props & children]
+  (apply react/createElement
+         tag
+         (->> props
+              (reduce-kv #(assoc %1 (csk/->camelCase %2) %3) {})
+              clj->js)
+         children))
+
+(cljsx/jsx>
+ (react-dom/render
+  (<div :class-name "foo" 
+        :on-click #(println "clicked") >
+        "Bar")
+  (js/document.querySelector "#mount-point")))
+```
 
 #### Key-value _Props_
 
@@ -245,7 +344,7 @@ A _shorthand prop_ will be expanded to a value of `true`.
 (createElement "button" {:disabled true :onClick #(println "click")})
 ```
 
-#### The ... _Spread_ Operator
+#### The `...` _Spread_ Operator
 
 As JSX, `cljsx` supports _spreading_ a map (or anything _spreadable_) to the
 _props_. Anything followed by the `...` symbol will be merged with the rest of
@@ -334,8 +433,8 @@ _JSX expressions_ can appear anywhere inside of the macro and can be arbitrarily
 deeply nested. They can appear as values in all the datastructure literals like
 lists, vectors, maps, sets. They can even appear as keys in maps. Moreover, they
 can appear as _prop_ values, which is a common pattern in [React] libraries like
-[React Router] and [Material UI]. You can even use it as values in spreads as
-long as it returns a valid value for the [merge] function.
+[React Router] and [Material-UI]. You can even use it as values in spreads as
+long as it returns a value accepted by [merge].
 
 ```clj
 (let [Header (fn [{:keys [children]}]
@@ -354,7 +453,7 @@ long as it returns a valid value for the [merge] function.
      footer))
 ```
 
-The `cljsx/jsx>` macro accepts any number of expressions. Multiple expressions
+The `jsx>` macro accepts any number of expressions. Multiple expressions
 will be expanded wrapped in a [do](https://clojuredocs.org/clojure.core/do)
 form. You can actually wrapp a whole namespace in the macro:
 
@@ -387,15 +486,15 @@ form. You can actually wrapp a whole namespace in the macro:
 
 ### Escaping
 
-The `cljsx/jsx>` macro uses some symbols as part of its DSL like the `...` as
+The `jsx>` macro uses some symbols as part of its DSL like the `...` as
 the _props spread_ operator, and the `>` as the end of _props tag_.
-It also treats specially symbols on the function call position whose names start
+It also specially treats symbols on the function call position whose names start
 with the `<` character, which it recognises as _JSX tags_.
 
 The macro doesn't have any special escape mechanism, but it relies on what's
-already available in Clojure. So if you need to pass the `>` as a value of a
-prop, or you happen to have a var assigned to a symbol starting with the `<`
-character, you can dereference the vars with the `@` reader macro:
+already available in Clojure. So if you need to pass the `>` function as a value
+of a prop, or you happen to have a var assigned to a symbol starting with the
+`<` character, you can dereference the vars with the `@` reader macro:
 
 ```clj
 (ns my-shadow-cljs-react-app.main
@@ -441,8 +540,8 @@ _prop_ value. You can however pass any expression that evaluates to a keyword.
 ```
 
 But you can pass a keyword constructed with the `keyword` function, or any other
-expressions which returns a keyword. Or even better _spread_ a keyword to
-keyword map into the _props_:
+expressions which returns a keyword. Or even better _spread_ a
+keyword-to-keyword map into the _props_:
 
 ```clj
 (cljsx/jsx>
@@ -462,7 +561,7 @@ keyword map into the _props_:
 Note that since the component calls are delegated to the `createElement`
 function, having components which expect keywords or other Clojure specific
 types as _prop_ values only makes sense if the `createElement` function is a
-Clojure function. For example `react.createElement` is expecting all its
+Clojure function. For example `react/createElement` is expecting all its
 arguments to be JavaScript objects and `cljsx` will do this conversion under the
 hood. React will then call your component with the converted JavaScript values
 and since the conversion is done with [clj->js] the keywords will become
@@ -470,17 +569,17 @@ strings. Read further about the JavaScript conversion in the next section.
 
 ### JavaScript Conversion
 
-Most of the time, you will be using `cljsx` with JavaScript libraries e.g.
+More likely than not, you will be using `cljsx` with JavaScript libraries e.g.
 [React], which expect JavaScript values as their arguments. So if you wanted to
-use `react.createElement` in ClojureScript directly you would need to pass the
-_props_ as JavaScript:
+use `react/createElement` in ClojureScript directly you would need to pass the
+_props_ as a plain JavaScript object:
 
 ```clj
 ;; You need to pass the props as JavaScript,
-;; either by using the #js reader macro
+;; either by using the #js reader macro,
 (react/createElement "h1" (clj->js #js{:style #js{:color "blue"}})
                       "Kind of blue")
-;; Or by the clj->js function
+;; or converted with clj->js
 (react/createElement "h1" (clj->js {:style {:color "blue"}})
                       "Kind of blue")
 ```
@@ -529,7 +628,6 @@ If `createElement` resolves to a JavaScript function, there are two places where
 the JavaScript conversion happens:
 
 * First all props are converted to JavaScript objects recursively with [clj->js].
-
 * Then all _reference tags_ which resolve to Clojure functions are intercepted
   so that the props passed to them by `createElement` can be converted back to
   Clojure maps with [js->clj] before they are passed to them. 
@@ -577,7 +675,7 @@ A function is reassigned to a let binding:
 ;; => [nil true true]
 ```
 
-A function is passed as argument to another function:
+A function is passed as an argument to another function:
 
 ```clj
 (defn f [])
@@ -628,8 +726,8 @@ A function is defined or reassigned in the same `cljsx` macro where it is used:
 
 #### Taking JavaScript Conversion Under Control
 
-There are various way how you can make sure the JavaScript conversion does or
-doesn't happen.
+There are various ways how you can ensure that your functions called by [React]
+will always be either Clojure data structures of JavaScript objects.
 
 ##### Setting a Var's Tag Meta
 
@@ -656,7 +754,7 @@ function is defined inside the same jsx macro call where it is used.
 
 ##### Conversion Decorators
 
-As the JavaScript conversion favours JavaScript when the result of the
+Since the JavaScript conversion favours JavaScript when the result of the
 underlying `clj-fn?` function is `nil`, you should only be concerned about what
 is passed to the components you defined and which you have under control.
 
@@ -691,11 +789,13 @@ which all arguments will be passed trhough [js->clj].
  (js/document.querySelector "#mount-point"))))
 ```
 
-Wrapping every component you write in a decorator is tedious and annoying.
-For this reasons `cljsx` comes with a bunch of macros to simplify writing
-component functions.
+##### Function Definition Macros
 
-##### The `fn-clj` And `defn-clj` Macros
+Wrapping every component you write in a decorator is tedious and annoying.
+But fear not, `cljsx` comes with a bunch of macros which simplify definition of
+functions with predictable data format.
+
+###### The `fn-clj` And `defn-clj` Macros
 
 The `fn-clj` and `defn-clj` macros have the same signature and work the same as
 their `fn` and `defn` counterparts, except that the functions they define will
@@ -766,17 +866,18 @@ libraries like [React Router].
   (js/document.querySelector "#mount-point")))
 ```
 
-###### The `component` and `defcomponent` Macro
+###### The `component` and `defcomponent` Macros
 
-The `component` and `defcomponent` macros work almost the same as the `fn-clj`
-and `def-clj` macros respectively, except that the functions they define are
-always _unary_ i.e. they only accept a single argument: the _props_, which
-can be a map, `nil` or a plain JavaScript object, in which case, similarly as
-with `def-clj` the functions will receive the argument converted using [js->clj]
-with `:keywordize-keys true`.
+The `component` and `defcomponent` macros are just a stripped-out version of the
+`fn-clj` and `defn-clj` macros. The only difference is that they define a
+_unary_ function with _props_ as the only argument, which can be a map, `nil` or
+a plain JavaScript object, in which case, similarly as with `def-clj` the
+functions will receive the argument converted using [js->clj] with
+`:keywordize-keys true`.
 
 The `component` and `defcomponent` signatures are the same as the signatures of
-`fn-clj` and `defn-clj` (or [fn] and [defn]) respectively except that:
+`fn-clj` and `defn-clj` (or [fn] and [defn]) respectively with these rather
+cosmetic differences:
 
 * Since both define unary functions there's no point in supporting multiple
   arities.
@@ -794,10 +895,10 @@ The `component` and `defcomponent` signatures are the same as the signatures of
 (defcomponent MyComponent props
   (map? props))
 
-;; The above statement is roughly equivalent to this
-(defn MyComponent [props]
-  (let [props' (js->clj props)]
-    (map? props')))
+;; The above statement is equivalent to this.
+;; The only difference is the missing square brackets of the argument vector.
+(defn-clj MyComponent' [props]
+  (map? props))
 
 (MyComponent {:a "A"}) ; true
 ;; Even if you call it with a JS object, it still receives a Clojure map
@@ -823,25 +924,157 @@ The `component` and `defcomponent` signatures are the same as the signatures of
 ;; => "<button class=\"foo my-button\">Click me!</button>"
 ```
 
-###### The `defcomponent-js` Macro
+### Example
 
-The `defcomponent-js` macro works the same as `defcomponent`. It will also
-always receive the _props_ as a Clojure map, so you can destructure the props,
-but now each _prop_ will be a JavaScript value.
+And finally an example of a simple application which uses [Material-UI] and
+[React Router] written in JSX, `cljsx` and [reagent].
 
-If you are asking why would anyone need to have _props_ as JavaScript values in
-ClojureScript? There are cases when you need them to be JavaScript values,
-for example if you want to use [_render props_] as children in your [React]
-components, which is a common pattern in [React] used in libraries like
-[React Router], [Material-UI] and many more.
+#### JavaScript With JSX
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { BrowserRouter, Link, Route } from 'react-router-dom'
+import { Avatar, Card, CardContent, CardHeader, IconButton } from '@material-ui/core'
+import * as icons from '@material-ui/icons'
+
+const IconButtonLink = props =>
+  <IconButton {...props} component={Link} />
+
+const App = () =>
+  <BrowserRouter>
+    <Route>
+      {({location: {pathname: path}}) => {
+        const activeIconName = path.slice(1)
+        const ActiveIcon = icons[activeIconName]
+        const title = ActiveIcon ? activeIconName : "Click the icons"
+        return (
+          <Card>
+            <CardHeader
+                title={title}
+                avatar={ActiveIcon && <Avatar><ActiveIcon/></Avatar>}/>
+            <CardContent>
+              {Object.keys(icons)
+                .filter(iconName => iconName.endsWith('TwoTone'))
+                .map(iconName => {
+                  const Icon = icons[iconName]
+                  const color = iconName === activeIconName
+                    ? "secondary"
+                    : "default"
+                  return (
+                    <IconButtonLink key={iconName} to={iconName} color={color} >
+                      <Icon/>
+                    </IconButtonLink>
+                  )
+                })}
+            </CardContent>
+          </Card>
+        )
+      }}
+    </Route>
+  </BrowserRouter>
+
+ReactDOM.render(
+  <App/>,
+  document.querySelector('#mount-point'),
+)
+```
+
+#### ClojureScript With CLJSX
 
 ```clj
-;; TODO: Ad a defcomponent-js example
+(ns shadow-cljs-example.main
+  (:require ["react" :as react]
+            ["react-dom" :as react-dom]
+            ["react-router-dom" :as rr]
+            ["@material-ui/core" :as mui]
+            ["@material-ui/icons" :as mui-icons]
+            [cljsx.core :refer [defcomponent fn-clj react>]]))
+
+(react>
+ (defcomponent IconButtonLink props
+   (<mui/IconButton ... props
+                    :component rr/Link >))
+
+ (defcomponent App _
+   (<rr/BrowserRouter>
+    (<rr/Route>
+     (fn-clj [{{path :pathname} :location}]
+             (let [active-icon-name (subs path 1)
+                   ^js ActiveIcon (aget mui-icons active-icon-name)]
+               (<mui/Card>
+                (<mui/CardHeader :title (if ActiveIcon
+                                          active-icon-name
+                                          "Click the icons")
+                                 :avatar (when ActiveIcon
+                                           (<mui/Avatar>
+                                            (<ActiveIcon>))) >)
+                (<mui/CardContent>
+                 (for [icon-name (js/Object.keys mui-icons)
+                       :when (.endsWith icon-name "TwoTone")
+                       :let [^js Icon (aget mui-icons icon-name)]]
+                   (<IconButtonLink :key icon-name
+                                    :to icon-name
+                                    :color (if (= icon-name active-icon-name)
+                                             "secondary"
+                                             "default") >
+                                    (<Icon>))))))))))
+
+ (react-dom/render
+  (<App>)
+  (js/document.querySelector "#mount-point")))
+```
+
+#### ClojureScript With Reagent
+
+```clj
+(ns shadow-cljs-example.main
+  (:require ["react-router-dom" :as rr]
+            ["@material-ui/core" :as mui]
+            ["@material-ui/icons" :as mui-icons]
+            [reagent.core :as r]))
+
+(defn icon-button-link [props & children]
+  (into [:> mui/IconButton (merge props {:component rr/Link})]
+        children))
+
+(defn app []
+  [:> rr/BrowserRouter
+   [:> rr/Route
+    (fn [js-route-props]
+      (let [path (-> js-route-props .-location .-pathname)
+            active-icon-name (subs path 1)
+            ActiveIcon (aget mui-icons active-icon-name)]
+        (r/as-element
+         [:> mui/Card
+          [:> mui/CardHeader {:title (if ActiveIcon
+                                       active-icon-name
+                                       "Click the icons")
+                              :avatar (r/as-element
+                                       [:> mui/Avatar
+                                        (when ActiveIcon
+                                          [:> mui/Avatar
+                                           [:> ActiveIcon]])])}]
+          [:> mui/CardContent
+           (for [icon-name (js/Object.keys icons)
+                 :when (.endsWith icon-name "TwoTone")
+                 :let [Icon (aget mui-icons icon-name)]]
+             ^{:key icon-name}
+             [icon-button-link {:to icon-name
+                                :color (if (= icon-name active-icon-name)
+                                         "secondary"
+                                         "default")}
+              [:> Icon]])]])))]])
+
+(r/render
+ [app]
+ (js/document.querySelector "#mount-point"))
 ```
 
 [fn]: https://clojuredocs.org/clojure.core/fn
 [defn]: https://clojuredocs.org/clojure.core/defn
 [clj->js]: https://cljs.github.io/api/cljs.core/clj-GTjs
+[hiccups]: https://github.com/teropa/hiccups
 [js->clj]: https://cljs.github.io/api/cljs.core/js-GTclj
 [Figwheel]: https://figwheel.org/
 [Inferno]: https://infernojs.org/
@@ -853,5 +1086,7 @@ components, which is a common pattern in [React] used in libraries like
 [React]: https://reactjs.org/
 [React Router]: https://reacttraining.com/react-router/
 [_render props_]: https://reactjs.org/docs/render-props.html 
+[reagent]: http://reagent-project.github.io/
 [shadow-cljs]: http://shadow-cljs.org/
 [Snabbdom]: https://github.com/snabbdom/snabbdom
+[spec]: https://clojure.org/about/spec 

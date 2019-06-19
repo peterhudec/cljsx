@@ -1,4 +1,4 @@
-(defproject cljsx "0.0.1-SNAPSHOT"
+(defproject cljsx "1.0.0"
   :description "JSX for Clojure and ClojureScript"
   :url "https://github.com/peterhudec/cljsx"
   :license {:author "Peter Hudec"
@@ -58,4 +58,3 @@
                                   [cljsjs/react "16.8.3-0"]
                                   [cljsjs/react-dom "16.8.3-0"]]}
              :midje {}})
-

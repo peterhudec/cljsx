@@ -11,20 +11,22 @@ but it works just as well with [Figwheel] and Clojure.
 
 ## TL;DR
 
-It's just a macro which transforms occurences of _JSX expressions_ into
-`(createElement tag props child-1 child-2 ,,,)` calls. It doesn't care about
-what `createElement` points to, this is up to you. That's why it works with most
-of the _vdom_ libraries.
+It's just a macro which transforms occurences of _JSX expressions_ like
+`(<div :className "foo" > "Hello" "World!")` into
+`(createElement "div" {:className "foo"} "Hello" "World!")`.
+`cljsx` doesn't really care about what `createElement` points to. It only tries
+to figure out whether it's a JavaScript or Clojure function so it can convert
+the arguments with [clj->js] if needed.
 
 ### Features
 
-* Not another [React] wrapper, just a macro. 
-* Works with all _vdom_ libraries which have the `createEelement` signature.
+* Not yet another [React] wrapper, just a macro. 
+* Works with all _vdom_ libraries which have the `createElement` signature.
 * JSX expressions can appear anywhere and can be arbitrarily nested. That's why
   it works so well with libraries like [React Router] or [Material-UI].
   Whole namespaces can be wrapped in the macro.
 * Has _props spread_ operator similar to `<div {...props} />`. 
-* Supports _truthy props_ shorthand as in `<button disabled />`.
+* Supports _truthy prop_ shorthand as in `<button disabled />`.
 * Automatically converts from and to JS if needed.
 * Built with [spec], so you'll know early when something goes wrong.
 
@@ -85,7 +87,7 @@ woring with [React] is mostly approached by inventing all sorts of wrappers,
 which more often than not come bundled with their own state managemet.
 The most idiomatic way to express [React] DOM trees in Clojure seems to be the
 [hiccups] format of nested vectors, which probably stems from the obsession with
-data in Clojure (as if lists were not data enough).
+data in Clojure (list's don't seem to be data enough).
 
 `cljsx.core/jsx>` is the missing macro. It's the main workhorse of the package
 alongside a bunch of helpers for taming the JavaScript conversion.
@@ -99,7 +101,7 @@ compatible libraries like [Inferno], [Nerv], [Preact] or [Snabbdom].
 The main thing `cljsx` provides is the `jsx>` macro and its brethren `react>`,
 `snabbdom>`, `inferno>` etc. The macro will recognize _JSX expressions_ in the
 code passed to it and will expand them into `createElement` calls. Anything else
-will be kept unchanged. 
+will be kept unchanged: 
 
 ```clj
 (macroexpand (cljs/jsx> (<div>)))

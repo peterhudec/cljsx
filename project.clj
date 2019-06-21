@@ -11,10 +11,6 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.520"]
                  [expound "0.7.2"]]
-  :deploy-repositories [["releases"  {:sign-releases false
-                                      :url "https://clojars.org"}]
-                        ["snapshots" {:sign-releases false
-                                      :url "https://clojars.org"}]]
   :aliases {"fig"
             ["trampoline" "run" "-m" "figwheel.main"]
 

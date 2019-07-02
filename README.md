@@ -30,10 +30,10 @@ the arguments with [clj->js] if needed.
 * Automatically converts from and to JS if needed.
 * Built with [spec], so you'll know early when something goes wrong.
 
-Let's say that you want to write a SPA directly in [React] not using any wrapper.
-Maybe you want to use [React Router] or other library and you don't want to deal
-with incompatibility issues with wrappers like [reagent]. You would directly use
-the `react/createElement` function which you assign to `h` for brevity:
+Let's say you want to write a SPA directly in [React], not using any wrapper.
+Maybe you want to use [React Router] or some other JavaScript library
+and you don't want to be dealing with incompatibility issues with wrappers like [reagent].
+You would directly use the `react/createElement` function which you assign to `h` for brevity:
 
 ```clj
 (ns shadow-cljs-example.main

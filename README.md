@@ -87,7 +87,7 @@ Notice the `:>` in front of every [React Router] component,
 the need to wrap the return value of the `rr/Route` callback
 in `r/as-element` and also, that using the anonymous function
 shorthand is a bit awkward with the [hiccups] vector markup,
-all of which just adds noise to the code.
+all of which just add noise to the code.
 
 ```clj
 (ns shadow-cljs-example.main

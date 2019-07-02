@@ -82,6 +82,31 @@ to someone with [React] background.
   (js/document.querySelector "#mount-point")))
 ```
 
+And this is what it would look like written in [reagent].
+Notice the `:>` in front of every [React Router] component,
+the need to wrap the return value of the `rr/Route` callback
+in `r/as-element` and also, that using the anonymous function
+shorthand is a bit awkward with the [hiccups] vector markup,
+all of which just adds noise to the code.
+
+```clj
+(ns shadow-cljs-example.main
+  (:require [reagent.core :as r]
+            ["react-router-dom" :as rr]))
+
+(r/render
+ [:> rr/BrowserRouter
+  [:> rr/Route
+   (fn [route-props]
+     (r/as-element
+      [:<>
+       [:h1 (-> route-props .-location .-pathname (subs 1))]
+       [:ul (map #(identity ^{:key %} [:li
+                                       [:> rr/Link {:to %} %]])
+                 ["foo" "bar" "baz"])]]))]]
+ (js/document.querySelector "#mount-point"))
+```
+
 ## Motivation
 
 If you think about it, [JSX] is just a _reader macro_, which merely adds

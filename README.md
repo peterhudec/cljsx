@@ -30,53 +30,81 @@ the arguments with [clj->js] if needed.
 * Automatically converts from and to JS if needed.
 * Built with [spec], so you'll know early when something goes wrong.
 
+Let's say you want to write a SPA directly in [React], not using any wrapper.
+Maybe you want to use [React Router] or some other JavaScript library
+and you don't want to be dealing with incompatibility issues with wrappers like [reagent].
+You would directly use the `react/createElement` function which you assign to `h` for brevity:
+
+```clj
+(ns shadow-cljs-example.main
+  (:require ["react" :as react]
+            ["react-dom" :as react-dom]
+            ["react-router-dom" :as rr]))
+
+(def h react/createElement)
+
+(react-dom/render
+ (h rr/BrowserRouter nil
+    (h rr/Route nil
+       (fn [route-props]
+         (h react/Fragment nil
+            (h "h1" nil  (-> route-props .-location .-pathname (subs 1)))
+            (h "ul" nil
+               (map #(h "li" #js{:key %}
+                        (h rr/Link #js{:to %} %))
+                    ["foo" "bar" "baz"]))))))
+ (js/document.querySelector "#mount-point"))
+```
+
+The `cljsx.core/jsx>` macro call in the following example just expands
+to something very similar and equivalent to the example above,
+except that the code is a bit more readable and looks more familiar
+to someone with [React] background.
+
 ```clj
 (ns shadow-cljs-example.main
   (:require ["react" :refer [createElement Fragment]]
             ["react-dom" :as react-dom]
-            ["@material-ui/core" :as material-ui]
-            ["@material-ui/icons" :as material-icons]
-            [cljsx.core :as cljsx]))
+            ["react-router-dom" :as rr]
+            [cljsx.core :refer [jsx> fn-clj]]))
 
-;; Components are just functions
-(defn MyComponent [props] "I'm just a function")
-
-;; The jsx> macro expands all JSX expressions to createElement calls.
-(cljsx/jsx>
- ;; This is not a JSX expression so it will not be transformed.
+(jsx>
  (react-dom/render
-  ;; This is a JSX expression with the intrinsic "div" tag, it expands to:
-  ;; (createElement "div" nil (createElement "button" ,,,))
-  (<div>
-   ;; This is a JSX expression with props, expands to:
-   ;; (createElement "button" (clj->js {:onClick #(println "click") :disabled true}) "Click me").
-   (<button :onClick #(println "click")
-            ;; This is a shorthand truthy prop
-            :disabled >
-            "Click me")
-   (let [foo {:foo "FOO"}]
-     ;; There's a syntax for props spreading, expands to:
-     ;; (createElement "h1" (clj->js (merge {:bar "BAR"} {:className "title"} foo)) "Hello, CLJSX!").
-     (<h1 ... {:bar "BAR"}
-          :className "title"
-          ... foo >
-          "Hello, CLJSX!"))
-   ;; If the tag name starts with upercase, it will expand to a symbol:
-   ;; (createElement MyComponent nil).
-   (<MyComponent>)
-   ;; The tag name can be namespaced, but the last part must be capitalized.
-   ;; Working with NPM React libraries is a pleasure.
-   (<material-ui/Chip :label "Foo"
-                      ;; JSX expressions can be nested.
-                      :avatar (<material-ui/Avatar>
-                               (<material-icons/Favorite>)) >)
-   (<ul>
-    ;; JSX expressions can appear anywhere.
-    (map #(<li :key % > %) ["foo" "bar" "baz"])
-    ;; Fragment tag is supported, expands to (createElement Fragment nil ,,,).
-    (<>
-     (<li> "bing"))))
+  (<rr/BrowserRouter>
+   (<rr/Route>
+    (fn-clj [{{path :pathname} :location}]
+      (<>
+       (<h1> (subs path 1))
+       (<ul>
+        (map #(<li :key % >
+                   (<rr/Link :to % > %))
+             ["foo" "bar" "baz"]))))))
   (js/document.querySelector "#mount-point")))
+```
+
+And this is what it would look like written in [reagent].
+Notice the `:>` in front of every [React Router] component,
+the need to wrap the return value of the `rr/Route` callback
+in `r/as-element` and also, that using the anonymous function
+shorthand is a bit awkward with the [hiccups] vector markup,
+all of which just add noise to the code.
+
+```clj
+(ns shadow-cljs-example.main
+  (:require [reagent.core :as r]
+            ["react-router-dom" :as rr]))
+
+(r/render
+ [:> rr/BrowserRouter
+  [:> rr/Route
+   (fn [route-props]
+     (r/as-element
+      [:<>
+       [:h1 (-> route-props .-location .-pathname (subs 1))]
+       [:ul (map #(identity ^{:key %} [:li
+                                       [:> rr/Link {:to %} %]])
+                 ["foo" "bar" "baz"])]]))]]
+ (js/document.querySelector "#mount-point"))
 ```
 
 ## Motivation

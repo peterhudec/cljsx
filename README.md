@@ -58,7 +58,7 @@ the `react/createElement` function which you assign to `h` for brevity:
 
 The `cljsx.core/jsx>` macro call in the following example just expands
 to something very similar and equivalent to the example above,
-except that the code is a bit more readable and looks familiar
+except that the code is a bit more readable and looks more familiar
 to someone with [React] background.
 
 ```clj

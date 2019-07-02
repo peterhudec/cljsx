@@ -111,7 +111,7 @@ all of which just add noise to the code.
 
 If you think about it, [JSX] is just a _reader macro_, which merely adds
 syntactic sugar to JavaScript. Oddly enough in ClojureScript, the problem of
-woring with [React] is mostly approached by inventing all sorts of wrappers,
+working with [React] is mostly approached by inventing all sorts of wrappers,
 which more often than not come bundled with their own state managemet.
 The most idiomatic way to express [React] DOM trees in Clojure seems to be the
 [hiccups] format of nested vectors, which probably stems from the obsession with

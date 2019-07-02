@@ -30,10 +30,6 @@ the arguments with [clj->js] if needed.
 * Automatically converts from and to JS if needed.
 * Built with [spec], so you'll know early when something goes wrong.
 
-Let's say you want to write a [React] application directly with [React],
-because you want to use [React Router] and you want to avoid incompatibility issues
-with
-
 Let's say that you want to write a SPA directly in [React] not using any wrapper.
 Maybe you want to use [React Router] or other library and you don't want to deal
 with incompatibility issues with wrappers like [reagent]. You would directly use

@@ -165,9 +165,9 @@ namespace.
  (createElement "h1" nil "Hello, CLJSX!"))
 ```
 
-The `cljsx/jsx>` macro expands to `createElement` and `Fragment` calls, which in
+The `cljsx.core/jsx>` macro expands to `createElement` and `Fragment` calls, which in
 JSX parlance is called _pragma_. If you will be using `cljsx` with [React], you
-can save some keystrokes by using the `cljsx/react>` macro, which works exactly
+can save some keystrokes by using the `cljsx.core/react>` macro, which works exactly
 as the `jsx>` macro, except that the _pragma_ is bound to `react/createElement`
 and `react/Fragment`.
 
@@ -199,7 +199,7 @@ interpreted. You could for example fall back to a _div_ with
 `(def Fragment "div")` or make it a function which throws an exception, or just
 let it fail on the undeclared `Fragment` var.
 
-You can even create your own JSX macro with the `cljsx/defjsx` macro, which is
+You can even create your own JSX macro with the `cljsx.core/defjsx` macro, which is
 how all the aforementioned macros are defined. Note that as `defjsx` is a macro
 which creates macros, it needs to be called in a `clj` or `cljc` file.
 

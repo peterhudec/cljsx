@@ -1,4 +1,4 @@
-# `cljsx` The Missing [JSX] Macro
+# `cljsx` The Missing [JSX] Clojure Macro
 
 [![Clojars Project](https://img.shields.io/clojars/v/cljsx.svg)](https://clojars.org/cljsx) 
 [![Build Status](https://travis-ci.org/peterhudec/cljsx.svg?branch=master)](https://travis-ci.org/peterhudec/cljsx)
